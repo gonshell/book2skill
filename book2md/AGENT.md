@@ -29,6 +29,7 @@
 - `fix_md.py`（1478 行，S1–S20 规则本体）、`md2html.py`、`scan3.py`、`scan_render.py`、
   `scan_md_preview.py`、`postprocess.py`、`rematch_merge.py`、`run_blocks.py`、
   `regen_toc_qa.py`、`run_pipeline.sh`、`render_formulas.js` + `katex/`、`tbpipe/` 骨架
+  ——以上为**原件名**；搬迁后的新名一律按 `docs/conventions.md` 附录 A 对照表
 
 ### 1.3 裁判（验收基准）
 - `../gzsx-md/final/<五册>/markdown.md` + 五册字符数基线——**行为保持对账的唯一裁判**

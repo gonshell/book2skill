@@ -19,7 +19,7 @@
 | 包/目录 | 小写单词，职责名词；**目录即命名空间** | `engine/` `extractors/` `packs/math/` |
 | Python 模块 | **优先单词名**；目录已表达的语义不得在模块名重复；确需多词才用 snake_case（PEP 8 允许） | `rules.py` `render.py` `inspectors/detectors.py` |
 | 探测器模块 | `inspectors/` 下按检测器聚合 | `inspectors/detectors.py`（D1–D10 整体）→ 拆分时 `inspectors/d2_set_notation.py` |
-| 测试 | `tests/test_<被测模块名>.py` | `tests/test_fix_rules.py` |
+| 测试 | `tests/test_<被测模块名>.py` | `tests/test_rules.py` |
 | 科目配置 | `configs/<学科>-<出版社/版本>.json`，kebab-case | `configs/math-renjiao-a.json` `configs/chem-renjiao.json` |
 | 后端配置 | `configs/backends/<backend-id>.json` | `configs/backends/mineru-remote.json` |
 | 文档 | `docs/` 下 kebab-case 英文文件名 | `spec-cli.md` `install.md` `backend.md` |
