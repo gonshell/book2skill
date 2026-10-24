@@ -36,6 +36,8 @@
 - 1–2 个 blocks zip 样例 + `ledger.json` 样例（抽取适配器契约测试用）
 
 ### 1.4 缰绳（纪律约束，违反即返工）
+- **命名与编码规范：见 `docs/conventions.md`（v1.0，强制标准）**——文件/目录/代码命名、
+  语言策略、stderr 日志纪律、测试约定、Git 约定均以它为准
 - **行为保持**：搬迁只许参数化重组，不许"顺手优化"任何规则语义；过关线 = 五册字符数逐字节一致
 - 纯 Python 标准库；Python 3.13 + Node.js；中文路径一律 UTF-8 + `pathlib.Path`
 - 术语：包 `textbook-pipe` / 命令 `tbp`（别名 `tbpipe`）/ `baselines`；

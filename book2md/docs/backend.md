@@ -30,9 +30,9 @@
 
 | 层 | 钉什么 | 状态 | 值 |
 |---|---|---|---|
-| 网关封装版本 | wrapper 版本号（若无则**需加 `/version` 端点**） | ❌ 待网关核实 | — |
-| 底层 MinerU 版本 | `mineru` 包版本（patch 脚本经 `importlib.metadata.version("mineru")` 读取过，值在网关机） | ❌ 待网关核实 | — |
-| 模型权重 | layout / OCR(PP-OCRv4) / 公式(UniMERNet) / 表格 各 commit/哈希 | ❌ 待网关核实 | — |
+| 网关封装版本 | wrapper 版本号（若无则**需加 `/version` 端点**） | ❌ **待确定**（网关不可达，探测记录见下） | — |
+| 底层 MinerU 版本 | `mineru` 包版本（patch 脚本经 `importlib.metadata.version("mineru")` 读取过，值在网关机） | ❌ **待确定**（同上） | — |
+| 模型权重 | layout / OCR(PP-OCRv4) / 公式(UniMERNet) / 表格 各 commit/哈希 | ❌ **待确定**（同上） | — |
 | 服务端补丁 | `mineru/model/ocr/image.py` 裁剪维度补丁（`img_crop_width/height → int(max(1.0, round(...)))`），源见工作区 `patch3/4/5_mineru_image.py`（AST 幂等、同版本重装后重新应用） | ⚠️ 已知存在，哈希待登记 | patch_id: `img-crop-min1` |
 | GPU 规格 | 型号 / 显存 / 驱动（basic 档经验下限：算力 ≥7.0、显存 6–8GB；并发建议 16GB+） | ❌ 待网关运维核实 | — |
 
