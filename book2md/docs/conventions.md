@@ -70,7 +70,7 @@
 ## 7. Git 约定
 
 - commit message：`type(scope): 中文摘要`，type ∈ `feat|fix|docs|refactor|test|chore`；
-  搬迁类注明源文件（如 `feat(engine): 搬迁 fix_md.py → fix_rules.py（自 gzsx-md，行为保持）`）。
+  搬迁类注明源文件（如 `feat(engine): 搬迁 fix_md.py → rules.py（自 gzsx-md，行为保持）`）。
 - **一模块一 commit**（搬迁期铁律），可单独回滚与二分。
 - 分支：单人开发 main 直提交；有回归疑虑开 `fix/…` 修完合回。
 
