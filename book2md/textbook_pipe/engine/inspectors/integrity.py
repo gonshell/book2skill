@@ -18,7 +18,7 @@ def scan(source_dir=None, books=None):
     books = books or BOOKS
     issues = {"行内游离$$": [], "奇数$行": [], "块内奇数$": []}
 
-    for book in BOOKS:
+    for book in books:
         path = os.path.join(source_dir, book, "markdown.md")
         lines = open(path, encoding="utf-8").read().split("\n")
         in_block = False

@@ -230,3 +230,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def configure(root):
+    """工作区路径注入（CLI 层调用）。
+
+    仅替换模块级路径常量（ROOT/BLOCKS/FINAL），不改变任何函数行为：
+    FINAL 对应 legacy 语义的 final 目录，在本包工作区布局中即 <workspace>/out。
+    """
+    global ROOT, BLOCKS, FINAL
+    ROOT = root
+    BLOCKS = os.path.join(ROOT, "blocks")
+    FINAL = os.path.join(ROOT, "out")
