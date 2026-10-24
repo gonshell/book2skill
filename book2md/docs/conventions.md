@@ -16,9 +16,9 @@
 
 | 对象 | 规则 | 示例 |
 |---|---|---|
-| 包/目录 | 小写 snake_case，职责名词 | `engine/` `extractors/` `packs/math/` |
-| Python 模块 | snake_case，一个模块一个职责 | `fix_rules.py` `render.py` `reporting.py` `cli.py` `config.py` |
-| 探测器模块 | `inspectors/d<编号>_<语义>.py` | `inspectors/d2_set_notation.py` |
+| 包/目录 | 小写单词，职责名词；**目录即命名空间** | `engine/` `extractors/` `packs/math/` |
+| Python 模块 | **优先单词名**；目录已表达的语义不得在模块名重复；确需多词才用 snake_case（PEP 8 允许） | `rules.py` `render.py` `inspectors/detectors.py` |
+| 探测器模块 | `inspectors/` 下按检测器聚合 | `inspectors/detectors.py`（D1–D10 整体）→ 拆分时 `inspectors/d2_set_notation.py` |
 | 测试 | `tests/test_<被测模块名>.py` | `tests/test_fix_rules.py` |
 | 科目配置 | `configs/<学科>-<出版社/版本>.json`，kebab-case | `configs/math-renjiao-a.json` `configs/chem-renjiao.json` |
 | 后端配置 | `configs/backends/<backend-id>.json` | `configs/backends/mineru-remote.json` |
@@ -79,20 +79,20 @@
 - SemVer；唯一来源 = `pyproject.toml` 的 `version`；
 - `v0.1.0` = P1 验收（五册对账全绿，验收方式届时由用户解冻欠账决定）。
 
-## 附录 A：搬迁改名对照表（2026-10-24 定稿）
+## 附录 A：搬迁改名对照表（v2，2026-10-24 定稿；v1 因"目录即命名空间"原则修正）
 
-改名原则：以职责命名、动词开头、去缩写；**改名只动文件名与 import，规则语义零改动**，
-每步照跑字符数对账。S1–S20 规则的中文名称字段（数据）原样保留。
+改名原则：**优先单词名；目录已表达的语义不在模块名重复；确需多词才 snake_case**。
+改名只动文件名与 import，规则语义零改动，每步照跑字符数对账。
+S1–S20 规则的中文名称字段（数据）原样保留。
 
 | 原名（gzsx-md，只读原件） | 新名（textbook_pipe） | 理由 |
 |---|---|---|
-| `fix_md.py` | `engine/fix_rules.py` | 职责 = 修复规则库与应用器 |
+| `fix_md.py` | `engine/rules.py` | 规则库与应用器；"修复"语义由 packs 规则包语境承载 |
 | `md2html.py` | `engine/render.py` | 双版本渲染 + 字体内联 |
 | `scan3.py` | `engine/inspectors/detectors.py` | D1–D10 注册表；拆分延后至规则配置化阶段 |
-| `scan_render.py` | `engine/inspectors/render_integrity.py` | 渲染完整性检测 |
-| `scan_md_preview.py` | `engine/inspectors/texmath_dollars.py` | texmath dollars 语义复刻 |
-| `postprocess.py` | `engine/reporting.py` | 页眉清理/双表示/映射/TOC/质检模式 |
-| `regen_toc_qa.py` | `engine/rebuild_toc_qa.py` | 动词开头、职责直述 |
-| `run_blocks.py` | `extractors/remote_mineru.py` | 类 `RemoteMinerUAdapter` |
+| `scan_render.py` | `engine/inspectors/integrity.py` | 渲染完整性检测（游离 $$ / 奇数 $） |
+| `scan_md_preview.py` | `engine/inspectors/texmath.py` | texmath dollars 语义复刻 |
+| `postprocess.py` + `regen_toc_qa.py` | `engine/reporting.py`（**二合一**） | 同属报告产物层；regen 是 postprocess 的只读入口 |
+| `run_blocks.py` | `extractors/mineru.py` | 类 `RemoteMinerUAdapter` 承载"remote"形态；backend 可配置，不写入文件名 |
 | `render_formulas.js` | `assets/katex/render_formulas.js` | 资产，名已达意 |
-| `tbpipe/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + 命令模块 | 旧骨架仅作参考 |
+| `tbpipe/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + `commands/` | 命令模块单词名：`commands/convert.py` `commands/baseline.py` … |
