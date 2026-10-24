@@ -40,6 +40,12 @@
 > （禁止占位假值）；基准回归（`tbp baseline`）在此期间是**唯一**的漂移防线——
 > 网关侧任何升级前必须先跑 `baseline run`。
 
+> **核实尝试记录（2026-10-24）**：① patch/test 脚本无版本留痕（运行时读取、未落盘）；
+> ② 本机探测网关 `//version /docs /openapi.json` 全部超时，ping 100% 丢包——
+> **网关当时不可达**，非"服务不暴露版本"。已知结构信息：pip 安装于
+> `/usr/local/lib/python3.12/dist-packages/mineru/`（网关 Python 3.12，mineru 2.x 世代）。
+> 补实途径：网关可达后执行 §3 三条命令，或运维加 `/version` 端点。
+
 ## 4. 客户端对网关的假设清单（适配器实现依据）
 
 1. 分块提交：40 页/块（run_blocks.py 现值，可配置）
