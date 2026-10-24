@@ -13,5 +13,8 @@ dependencies = []
 tbp = "textbook_pipe.cli:main"
 tbpipe = "textbook_pipe.cli:main"   # 过渡期别名（Q5 定稿：C 方案）
 
+[project.optional-dependencies]
+extract = ["pymupdf"]   # 仅本地读 PDF 页数用（远程抽取时不装亦可）
+
 [tool.setuptools.packages.find]
 include = ["textbook_pipe*"]

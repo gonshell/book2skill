@@ -94,5 +94,6 @@ S1–S20 规则的中文名称字段（数据）原样保留。
 | `scan_md_preview.py` | `engine/inspectors/texmath.py` | texmath dollars 语义复刻 |
 | `postprocess.py` + `regen_toc_qa.py` | `engine/reporting.py`（**二合一**） | 同属报告产物层；regen 是 postprocess 的只读入口 |
 | `run_blocks.py` | `extractors/mineru.py` | 类 `RemoteMinerUAdapter` 承载"remote"形态；backend 可配置，不写入文件名 |
+| `rematch_merge.py` | `extractors/merge.py` | 页序重合并（v1 附录漏列，2026-10-25 补） |
 | `render_formulas.js` | `assets/katex/render_formulas.js` | 资产，名已达意 |
 | `tbpipe/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + `commands/` | 命令模块单词名：`commands/convert.py` `commands/baseline.py` … |
