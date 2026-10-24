@@ -351,15 +351,15 @@ tbp baseline run [--subject <id>]              # 例行：重抽 → 同页扫�
 **run 结果三态**：一致（exit 0，"后端指纹未漂移"）；**漂移（exit 40，列出各指标差异
 + 当前 provenance vs 基线 provenance 对比）**；基线不存在（exit 20，提示先 init）。
 
-## 7. 依赖与预检
+## 7. 依赖与预检（锁定值见 docs/install.md 客户端表 / docs/backend.md 网关表）
 
-| 依赖 | 预检时机 | 缺失行为 |
-|---|---|---|
-| Python ≥ 3.13（包自身） | 安装时 | pip 拒绝 |
-| Node.js（KaTeX 预渲染） | `run`/`convert` 启动前 | 退出码 20，stderr 指引 |
-| katex/ 资产随包 | 同上 | 退出码 20 |
-| MinerU 网关连通性 | `extract`/`onboard`/`convert` 启动前 | 退出码 30 |
-| 网关版本指纹 ∈ 契约允许集合 | 同上；`backend.patched_files` 补丁在场校验 | 退出码 40 |
+| 依赖 | 锁定值 | 预检时机 | 缺失/不符行为 |
+|---|---|---|---|
+| Python | 3.13.14 实测（≥3.13） | 安装时 | pip 拒绝 |
+| Node.js | v22.22.2 实测 | `run`/`convert` 启动前 | 退出码 20 |
+| KaTeX | 0.16.11 资产随包（20 字体） | 同上 | 退出码 20 |
+| MinerU 网关 | 连通性 + `tier=basic` 契约 | `extract`/`onboard`/`convert` 启动前 | 退出码 30 |
+| 网关版本指纹 + 补丁在场 | ∈ docs/backend.md 允许集合 | 同上 | 退出码 40 |
 
 ## 8. 冻结与变更流程
 
