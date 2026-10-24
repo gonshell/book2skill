@@ -78,3 +78,21 @@
 
 - SemVer；唯一来源 = `pyproject.toml` 的 `version`；
 - `v0.1.0` = P1 验收（五册对账全绿，验收方式届时由用户解冻欠账决定）。
+
+## 附录 A：搬迁改名对照表（2026-10-24 定稿）
+
+改名原则：以职责命名、动词开头、去缩写；**改名只动文件名与 import，规则语义零改动**，
+每步照跑字符数对账。S1–S20 规则的中文名称字段（数据）原样保留。
+
+| 原名（gzsx-md，只读原件） | 新名（textbook_pipe） | 理由 |
+|---|---|---|
+| `fix_md.py` | `engine/fix_rules.py` | 职责 = 修复规则库与应用器 |
+| `md2html.py` | `engine/render.py` | 双版本渲染 + 字体内联 |
+| `scan3.py` | `engine/inspectors/detectors.py` | D1–D10 注册表；拆分延后至规则配置化阶段 |
+| `scan_render.py` | `engine/inspectors/render_integrity.py` | 渲染完整性检测 |
+| `scan_md_preview.py` | `engine/inspectors/texmath_dollars.py` | texmath dollars 语义复刻 |
+| `postprocess.py` | `engine/reporting.py` | 页眉清理/双表示/映射/TOC/质检模式 |
+| `regen_toc_qa.py` | `engine/rebuild_toc_qa.py` | 动词开头、职责直述 |
+| `run_blocks.py` | `extractors/remote_mineru.py` | 类 `RemoteMinerUAdapter` |
+| `render_formulas.js` | `assets/katex/render_formulas.js` | 资产，名已达意 |
+| `tbpipe/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + 命令模块 | 旧骨架仅作参考 |
