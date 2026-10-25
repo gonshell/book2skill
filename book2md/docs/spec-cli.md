@@ -1,8 +1,10 @@
 # textbook-pipe 命令集接口规格（spec-cli）
 
-> 版本：v0.1 草案 · 2026-10-24 · 状态：**待用户审定，审定后冻结**（AGENT.md §1.1）
+> 版本：v0.2 草案 · 2026-10-25 · 状态：**待用户审定，审定后冻结**（AGENT.md §1.1）
 > 本文件是核心包 CLI 与 WorkBuddy 技能壳共同的接口地基。实现以本文件为准；
 > 修改本文件必须经用户确认并升版本号。
+> 变更记录：v0.2 = §5 信封新增可选顶层字段 `extra`（命令特有数据，禁覆盖核心键）；
+> §6.10 `run` 补可选 `--pdf`；§6.1 配置键补 `backend_endpoint`。
 
 ---
 
@@ -78,7 +80,8 @@
   },
   "warnings": [],                  // 非致命事项（如 C 档待裁定条数）
   "elapsed_sec": 612.3,
-  "error": null                    // 失败时为 {"code":10, "gate":"kaTeX", "message":"..."}
+  "error": null,                   // 失败时为 {"code":10, "gate":"kaTeX", "message":"..."}
+  "extra": {}                      // 可选：命令特有字段顶层合并（如 baseline 的 status/drifts/segments）
 }
 ```
 
@@ -335,7 +338,7 @@ tbp report --all                       # workspace 内全部已转换书
 
 ```
 tbp baseline init --subject math-renjiao-a     # 首次：从已验收书抽页入库 + 记录基线
-tbp baseline run [--subject <id>]              # 例行：重抽 → 同页扫描 → 指标比对
+tbp baseline run [--subject <id>] [--pdf <路径>]   # 例行：重抽 → 同页扫描 → 指标比对
 ```
 
 **init 规则**：每本已验收书抽固定页集（默认每册首/中/尾各 2 页，可经科目配置

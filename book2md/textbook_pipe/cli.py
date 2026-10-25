@@ -34,13 +34,6 @@ def _resolve_workspace(args):
     return os.getcwd()
 
 
-def _todo(name, feature):
-    """未接线命令的统一信封（能力缺口显式可见，不静默）。"""
-    return _envelope.emit(name, EXIT_USAGE,
-                          error={"code": "NOT_WIRED",
-                                 "message": "%s 依赖尚未完成接线的组件：%s（见 AGENT.md 欠账台账）" % (name, feature)})
-
-
 def build_parser():
     p = argparse.ArgumentParser(prog="tbp", description="教材 PDF → md+图片+公式 → 双版本单体 HTML 转换工具")
     p.add_argument("--workspace", help="工作区目录（覆盖四层解析）")
@@ -92,10 +85,13 @@ def build_parser():
     sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("extract").execute(a, t0))
 
-    sp = sub.add_parser("baseline", help="基准回归（防后端静默漂移）")
+    sp = sub.add_parser("baseline", help="基准回归（防后端静默漂移，spec §6.10）")
     sp.add_argument("action", choices=["init", "run"])
-    sp.add_argument("--subject", help="科目配置 id")
-    sp.set_defaults(func=lambda a, t0: _todo("baseline", "抽取适配器接线（页面重抽部分）"))
+    sp.add_argument("--subject", required=True, help="科目配置 id")
+    sp.add_argument("--book", help="限定单册（默认 init=全部已转换书 / run=基线全部书）")
+    sp.add_argument("--pdf", help="run 用：PDF 路径（缺省按基线记录名在 workspace 根/inbox/pdf/ 查找）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("baseline").execute(a, t0))
 
     return p
 
