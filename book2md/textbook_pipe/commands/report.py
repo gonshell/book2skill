@@ -9,11 +9,9 @@ import sys
 import time
 
 from textbook_pipe.engine import reporting
+from textbook_pipe.engine.reporting import QA_COLUMNS
 from textbook_pipe.exit_codes import EXIT_MISSING, EXIT_OK
 from textbook_pipe.commands._envelope import emit
-
-QA_COLUMNS = ["公式内中文引号错识", "overrightarrow误识为widehat", "顶点bar误识",
-              "多余否定号\\not", "花括号错位"]
 
 
 def execute(args, t0):

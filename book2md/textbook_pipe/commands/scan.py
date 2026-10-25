@@ -5,13 +5,11 @@
 --source out：扫修复终版（回归过关线 = 探测器全零）；
 --source extract：扫抽取原始 md（评估规则包覆盖率）。
 """
-import datetime
-import json
 import os
 
-from textbook_pipe.engine.inspectors import detectors, integrity, texmath
 from textbook_pipe.exit_codes import EXIT_MISSING, EXIT_OK
 from textbook_pipe.commands._envelope import emit
+from textbook_pipe.commands import _issues
 
 
 def execute(args, t0):
@@ -23,29 +21,10 @@ def execute(args, t0):
                     error={"code": "NO_BOOK",
                            "message": "未找到 %s（需要 %s/<book>/markdown.md）" % (md, src_root)}, t0=t0)
 
-    det = detectors.run(source_dir=src_root, books=[args.book])
-    integ = integrity.scan(source_dir=src_root, books=[args.book])
-    tex = texmath.run(source_dir=src_root, books=[args.book])
-
-    total = det["total"] + sum(len(v) for v in integ.values()) + tex["total"]
-    items = [{"id": "I-%04d" % i, "tier": "B", "detector": name,
-              "line": None, "excerpt": None, "suggestion": None}
-             for name, n in det["per_detector"].items() for i in range(n)]
-    issues = {
-        "schema": "tbp.issues/v1",
-        "book": args.book,
-        "generated_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
-        "counts": {"A": 0, "B": total, "C": 0},
-        "items": items,
-        "detail": {"detectors": det["per_detector"],
-                   "render_integrity": {k: len(v) for k, v in integ.items()},
-                   "texmath": tex["per_book"]},
-        "note": "细项见 stderr 报告；tier 归类（A 引擎自修 / C 人工裁定）在 run/onboard 环节细分",
-    }
+    issues = _issues.collect(args.book, src_root, books=[args.book])
+    total = issues["counts"]["B"]
     out_dir = os.path.join(workspace, "out", args.book)
-    os.makedirs(out_dir, exist_ok=True)
-    issues_path = os.path.join(out_dir, "issues.json")
-    json.dump(issues, open(issues_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    issues_path = _issues.write(issues, os.path.join(out_dir, "issues.json"))
 
     warnings = []
     if args.source == "out" and total > 0:

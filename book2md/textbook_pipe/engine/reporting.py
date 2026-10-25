@@ -170,6 +170,9 @@ QA_PATTERNS = {
     "花括号错位": re.compile(r"[A-Za-z0-9]\.?\}'"),
 }
 
+# 质检报告列序（单源：report 命令与 run 的 toc 门共用，键须与 QA_PATTERNS 一致）
+QA_COLUMNS = list(QA_PATTERNS.keys())
+
 
 def main():
     report = {}

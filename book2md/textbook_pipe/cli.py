@@ -66,12 +66,15 @@ def build_parser():
     sp.add_argument("--subject", required=True, help="科目配置 id")
     sp.add_argument("--gates", default="all", help="逗号分隔子集（deps,fix,html,selfcontain,render,preview,scan3,toc）")
     sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
-    sp.set_defaults(func=lambda a, t0: _run_gate(a, t0))
+    sp.set_defaults(func=lambda a, t0: _import("run").execute(a, t0))
 
     sp = sub.add_parser("convert", help="一条命令全流程（抽取 + 流水线）")
     sp.add_argument("--pdf", required=True, help="教材 PDF 路径")
     sp.add_argument("--subject", required=True, help="科目配置 id")
-    sp.set_defaults(func=lambda a, t0: _todo("convert", "质量门编排接线（run，下一步）"))
+    sp.add_argument("--page-range", help="物理页范围 N-M")
+    sp.add_argument("--force", action="store_true")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _convert(a, t0))
 
     sp = sub.add_parser("onboard", help="新书接入（抽取 + 基线扫描 → issues.json）")
     sp.add_argument("--subject", required=True, help="科目配置 id")
@@ -102,21 +105,67 @@ def _import(name):
     return importlib.import_module("textbook_pipe.commands." + name)
 
 
-def _run_gate(a, t0):
-    """tbp run：阶段 B 质量门编排。
+def _import(name):
+    import importlib
+    return importlib.import_module("textbook_pipe.commands." + name)
 
-    当前接线状态：修复引擎（rules）/渲染（render）/探测器（inspectors）已就位；
-    输入契约检查按 spec 执行（extract/<book>/contract.json 缺失 → 50）。
-    完整编排（staging 原子落盘等）在抽取适配器接线后启用。
+
+def _convert(a, t0):
+    """tbp convert = extract + run 的原子组合（docs/spec-cli.md §6.7）。
+
+    C 档默认处理策略：引擎按现有规则处理全部内容，存疑条目列入质检报告复核队列。
     """
-    from textbook_pipe import exit_codes as ec
-    workspace = _resolve_workspace(a)
-    contract = os.path.join(workspace, "extract", a.book, "contract.json")
-    if not os.path.exists(contract):
-        return _envelope.emit("run", ec.EXIT_MISSING, workspace=workspace, book=a.book,
-                              error={"code": "NO_CONTRACT",
-                                     "message": "未找到 %s（先执行 extract/onboard）" % contract})
-    return _todo("run", "质量门编排接线（依赖抽取适配器，切片 4）")
+    from types import SimpleNamespace
+    from textbook_pipe.commands import onboard as onboard_mod
+
+    # 前置检查复用 onboard 语义：PDF 存在性、科目配置（缺失生成模板 + 20）、网关预检
+    pre = SimpleNamespace(workspace=a.workspace, pdf=a.pdf, subject=a.subject,
+                          page_range=a.page_range, force=a.force)
+    pdf = os.path.abspath(a.pdf)
+    if not os.path.exists(pdf):
+        return _envelope.emit("convert", 50, workspace=a.workspace,
+                              error={"code": "NOT_FOUND", "message": "PDF 不存在：%s" % pdf}, t0=t0)
+    book = os.path.splitext(os.path.basename(pdf))[0]
+    cpath = onboard_mod._subject_config_path(a.subject)
+    if not os.path.exists(cpath):
+        import json
+        tpl = dict(onboard_mod.SUBJECT_TEMPLATE)
+        tpl["subject"] = a.subject
+        tpl["rules_pack"] = "packs/%s.json" % a.subject
+        os.makedirs(onboard_mod.CONFIGS_DIR, exist_ok=True)
+        json.dump(tpl, open(cpath, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        print("!! 科目配置不存在，已生成模板：%s（编辑后重跑）" % cpath, file=sys.stderr)
+        return _envelope.emit("convert", EXIT_USAGE, workspace=a.workspace, book=book,
+                              artifacts={"subject_template": cpath},
+                              error={"code": "NO_SUBJECT_CONFIG",
+                                     "message": "科目配置 %s 不存在，模板已生成，编辑后重跑" % cpath}, t0=t0)
+    api = _import("_endpoints").resolve_api()
+    if api is None:
+        return _envelope.emit("convert", EXIT_USAGE, workspace=a.workspace, book=book,
+                              error={"code": "NO_ENDPOINT",
+                                     "message": "未配置网关端点：设环境变量 TBP_BACKEND_API，"
+                                                "或 tbp config set backend_endpoint http://<host>:<port>"}, t0=t0)
+    reachable, detail = onboard_mod._precheck_gateway(api)
+    if not reachable:
+        return _envelope.emit("convert", 30, workspace=a.workspace, book=book,
+                              error={"code": "GATEWAY_UNREACHABLE",
+                                     "message": "网关不可达 %s（%s）" % (api, detail)}, t0=t0)
+
+    # 阶段一：抽取
+    from textbook_pipe.extractors import mineru
+    from textbook_pipe.commands.extract import parse_page_range
+    start, end = parse_page_range(a.page_range)
+    try:
+        mineru.extract_pdf(pdf, book, a.workspace, api, tier="basic",
+                           start_page=start if start is not None else mineru.DEFAULT_START_PAGE,
+                           end_page=end, force=a.force)
+    except RuntimeError as e:
+        return _envelope.emit("convert", 30, workspace=a.workspace, book=book,
+                              error={"code": "BACKEND_FAILED", "message": str(e)}, t0=t0)
+
+    # 阶段二：质量门流水线（全绿自动晋升 out/<book>/）
+    run_args = SimpleNamespace(workspace=a.workspace, book=book, subject=a.subject, gates="all")
+    return _import("run").execute(run_args, t0)
 
 
 def main(argv=None):
