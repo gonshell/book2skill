@@ -12,8 +12,13 @@ import os
 import subprocess
 import sys
 import unittest
+import warnings
 
 from textbook_pipe.engine.inspectors import detectors, integrity, texmath
+
+# 引擎模块遗留 open().read() 的未关闭文件在 gc 时机不定时会向捕获的 stderr
+# 播报 ResourceWarning——属进程内环境噪音，非行为差异，测试内统一压制
+warnings.simplefilter("ignore", ResourceWarning)
 
 SRC = os.environ.get("TBP_PARITY_SOURCE")
 PY = sys.executable
@@ -70,4 +75,4 @@ class InspectorsParityTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(warnings="ignore")

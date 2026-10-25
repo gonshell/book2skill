@@ -161,10 +161,12 @@ def run(source_dir=None, books=None):
     if not source_dir:
         raise ValueError("run() 需要 source_dir（参数化注入）")
     _SRC_DIR = source_dir
-    only = [a for a in (books or []) if a in BOOKS]
+    # books 参数优先（空则回退默认五册）；不得按 BOOKS 白名单过滤——
+    # 否则任意册名（新科目接入）会被静默丢弃、回落成全五册扫描
+    only = list(books) if books else BOOKS
     grand = 0
     per = {}
-    for book in (only or BOOKS):
+    for book in only:
         issues = scan_book(book)
         per[book] = len(issues)
         print("===== %s：%d 处 =====" % (book, len(issues)), file=sys.stderr)

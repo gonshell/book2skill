@@ -7,7 +7,7 @@ import sys
 from textbook_pipe.exit_codes import EXIT_OK, EXIT_USAGE
 from textbook_pipe.commands._envelope import emit
 
-CONFIG_KEYS = ("workspace", "backend", "subjects")
+CONFIG_KEYS = ("workspace", "backend", "backend_endpoint", "subjects")
 VALID_BACKENDS = ("mineru-remote", "local-mineru", "manual")
 
 

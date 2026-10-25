@@ -48,7 +48,7 @@ def build_parser():
 
     sp = sub.add_parser("config", help="用户配置管理（~/.tbp/config.json）")
     sp.add_argument("action", choices=["get", "set", "path"])
-    sp.add_argument("key", nargs="?", help="workspace | backend | subjects")
+    sp.add_argument("key", nargs="?", help="workspace | backend | backend_endpoint | subjects")
     sp.add_argument("value", nargs="?", help="set 时的值")
     sp.set_defaults(func=lambda a, t0: _import("config").execute(a, t0))
 
@@ -65,26 +65,29 @@ def build_parser():
     sp.add_argument("--book", required=True, help="册名")
     sp.add_argument("--subject", required=True, help="科目配置 id")
     sp.add_argument("--gates", default="all", help="逗号分隔子集（deps,fix,html,selfcontain,render,preview,scan3,toc）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _run_gate(a, t0))
 
     sp = sub.add_parser("convert", help="一条命令全流程（抽取 + 流水线）")
     sp.add_argument("--pdf", required=True, help="教材 PDF 路径")
     sp.add_argument("--subject", required=True, help="科目配置 id")
-    sp.set_defaults(func=lambda a, t0: _todo("convert", "抽取适配器接线（extractors/mineru.py）"))
+    sp.set_defaults(func=lambda a, t0: _todo("convert", "质量门编排接线（run，下一步）"))
 
     sp = sub.add_parser("onboard", help="新书接入（抽取 + 基线扫描 → issues.json）")
     sp.add_argument("--subject", required=True, help="科目配置 id")
     sp.add_argument("--pdf", required=True, help="教材 PDF 路径")
     sp.add_argument("--page-range", help="物理页范围 N-M")
     sp.add_argument("--force", action="store_true")
-    sp.set_defaults(func=lambda a, t0: _todo("onboard", "抽取适配器接线（extractors/mineru.py）"))
+    sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("onboard").execute(a, t0))
 
     sp = sub.add_parser("extract", help="仅抽取（PDF → Canonical Extraction v1）")
-    sp.add_argument("--book", required=True, help="册名")
+    sp.add_argument("--book", required=True, help="册名（=PDF 文件名去扩展名；不一致时以文件名为准并告警）")
     sp.add_argument("--pdf", required=True, help="教材 PDF 路径")
     sp.add_argument("--page-range", help="物理页范围 N-M")
     sp.add_argument("--force", action="store_true")
-    sp.set_defaults(func=lambda a, t0: _todo("extract", "抽取适配器接线（extractors/mineru.py）"))
+    sp.add_argument("--workspace", default=argparse.SUPPRESS, help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("extract").execute(a, t0))
 
     sp = sub.add_parser("baseline", help="基准回归（防后端静默漂移）")
     sp.add_argument("action", choices=["init", "run"])
