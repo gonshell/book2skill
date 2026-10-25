@@ -3,7 +3,7 @@
 #
 # 用法：
 #   bash run_tests.sh                      # 冒烟 + 契约测试（不依赖历史产物）
-#   TBP_PARITY_SOURCE=<gzsx-md> bash run_tests.sh   # 追加三套行为保持对账（约 90s）
+#   TBP_PARITY_SOURCE=<gzsx-md> bash run_tests.sh   # 追加四套行为保持对账（约 11 分钟）
 #
 # 环境要求：Python ≥3.13（解释器见 docs/install.md）、Node.js ≥22、PIL（Pillow）。
 # 任一测试失败立即非零退出（set -e）。
@@ -32,10 +32,12 @@ run test_run_smoke
 run test_baseline_smoke
 
 # 第二梯队：行为保持对账（需 TBP_PARITY_SOURCE 指向五册历史产物目录，缺省跳过）
+# 注意：test_render_parity 为 10 个 HTML 逐字节对账，约 10 分钟，放最后。
 if [ -n "$TBP_PARITY_SOURCE" ]; then
     run test_merge_parity
     run test_inspectors_parity
     run test_behavior_parity
+    run test_render_parity
 else
     echo "== 对账测试跳过（未设 TBP_PARITY_SOURCE，P1 验收时必须设置）=="
 fi
