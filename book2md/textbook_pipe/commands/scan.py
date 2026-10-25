@@ -17,7 +17,7 @@ def execute(args, t0):
     src_root = os.path.join(workspace, args.source)   # out/ 或 extract/
     md = os.path.join(src_root, args.book, "markdown.md")
     if not os.path.exists(md):
-        return emit("scan", EXIT_MISSING,
+        return emit("scan", EXIT_MISSING, workspace=src_root, book=args.book,
                     error={"code": "NO_BOOK",
                            "message": "未找到 %s（需要 %s/<book>/markdown.md）" % (md, src_root)}, t0=t0)
 

@@ -18,3 +18,7 @@ extract = ["pymupdf"]   # 仅本地读 PDF 页数用（远程抽取时不装亦�
 
 [tool.setuptools.packages.find]
 include = ["textbook_pipe*"]
+
+# KaTeX 0.16.11 资产随包分发（docs/install.md 锁定表）——缺此段 wheel 安装后渲染不可用
+[tool.setuptools.package-data]
+textbook_pipe = ["assets/*.js", "assets/katex/*", "assets/katex/fonts/*"]
