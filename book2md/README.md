@@ -94,7 +94,7 @@ textbook_pipe/           核心包（P1，本版本交付）：引擎 + 适配�
 ├── configs/             backends 网关契约 + 科目配置
 ├── packs/               L1 学科规则包（math 已有，chem/physics 预研）
 └── assets/katex/        KaTeX 0.16.11 预渲染资产（随包分发）
-skill-textbook-pipe/     WorkBuddy 技能壳（P2，未开工）：SKILL.md + scripts + references
-tests/                   八套测试 + 抽取契约真实样例（fixtures/）
+skill-textbook-pipe/     WorkBuddy 技能壳（P2）：SKILL.md + 4 脚本 + 4 参考文档 + 报告模板
+tests/                   九套测试 + 抽取契约真实样例（fixtures/）
 docs/                    四手册（spec / install / backend / conventions）
 ```
