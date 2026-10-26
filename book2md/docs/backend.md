@@ -39,21 +39,23 @@
 
 | 层 | 钉什么 | 状态 | 值 |
 |---|---|---|---|
-| 网关封装版本 | wrapper 版本号（若无则**需加 `/version` 端点**） | ❌ **待确定**（网关不可达，探测记录见下） | — |
-| 底层 MinerU 版本 | `mineru` 包版本（patch 脚本经 `importlib.metadata.version("mineru")` 读取过，值在网关机） | ❌ **待确定**（同上） | — |
-| 模型权重 | layout / OCR(PP-OCRv4) / 公式(UniMERNet) / 表格 各 commit/哈希 | ❌ **待确定**（同上） | — |
+| 网关封装版本 | wrapper 版本号 | ✅ **已核实（2026-10-26 远程）**：FastAPI "MinerU API"，API 版本 1.0.0，OpenAPI 3.1.0，19 端点，匿名访问；端点面快照见 `docs/gateway-openapi-20261026.json` | `/openapi.json` |
+| 底层 MinerU 版本 | `mineru` 包版本 | ✅ **已核实（2026-10-26 远程）**：**4.0.12**（`/v1/health` `version` 字段；`/v1/tiers`、`/v1/models` 三处一致；无 `/version` 端点，版本在 `/v1/health`） | `/v1/health` |
+| 模型权重 | basic 档 torch 8 权重，官方仓 `OpenDataLab/MinerU-4_models_torch`（854 MB） | ✅ **已核实：8/8 sha256**（ModelScope API 2026-10-26）；明细见工作区《MinerU自托管实操手册》§3.2 | ModelScope API |
 | 服务端补丁 | `mineru/model/ocr/image.py` 裁剪维度补丁（`img_crop_width/height → int(max(1.0, round(...)))`），源见工作区 `patch3/4/5_mineru_image.py`（AST 幂等、同版本重装后重新应用） | ⚠️ 已知存在，哈希待登记 | patch_id: `img-crop-min1` |
-| GPU 规格 | 型号 / 显存 / 驱动（basic 档经验下限：算力 ≥7.0、显存 6–8GB；并发建议 16GB+） | ❌ 待网关运维核实 | — |
+| GPU 规格 | 型号 / 显存 / 驱动（经验下限：算力 ≥7.0、显存 6–8GB；**实测 CC 6.1 已跑通 basic 档**，以实测为准） | ❌ 待网关运维核实（`nvidia-smi`） | — |
+| 服务限额 | 1000 页/文件、200 MB/文件、100 文件/任务、`max_concurrent_jobs: 1`、文件保留 1 天 | ✅ **已核实（2026-10-26 远程）** | `/v1/usage` |
 
-> ⚠️ **MinerU 版本未核实期间的纪律**：`provenance.json` 相关字段显式记 `null`
-> （禁止占位假值）；基准回归（`tbp baseline`）在此期间是**唯一**的漂移防线——
-> 网关侧任何升级前必须先跑 `baseline run`。
+> ⚠️ **版本已核实（4.0.12）后的纪律仍然有效**：`tbp baseline` 是**唯一**的漂移防线——
+> 网关侧任何升级前必须先跑 `baseline run`。已知图片数量类指标（悬空引用/缺图）
+> 存在 run 间噪声（同版本重抽 18↔21），字符指标（±0.5% 容差）才是稳定锚点；
+> `provenance.json` 版本字段自 2026-10-26 起可填 `4.0.12`（源：`/v1/health`）。
 
-> **核实尝试记录（2026-10-24）**：① patch/test 脚本无版本留痕（运行时读取、未落盘）；
-> ② 本机探测网关 `//version /docs /openapi.json` 全部超时，ping 100% 丢包——
-> **网关当时不可达**，非"服务不暴露版本"。已知结构信息：pip 安装于
-> `/usr/local/lib/python3.12/dist-packages/mineru/`（网关 Python 3.12，mineru 2.x 世代）。
-> 补实途径：网关可达后执行 §3 三条命令，或运维加 `/version` 端点。
+> **核实尝试记录**：① 2026-10-24 网关不可达（探测超时、ping 全丢包），当时无法定版本；
+> ② 2026-10-26 网关恢复，`/openapi.json`、`/v1/health`、`/v1/tiers`、`/v1/models`、
+> `/v1/usage` 实测成功，完成上表三项远程核实。**仍须网关机采集**：GPU 型号/显存/驱动
+> （`nvidia-smi`）、docker run 参数（`docker inspect`）、模型缓存路径（`ls ~/.cache/modelscope`）、
+> wrapper 源码位置。
 
 ## 4. 客户端对网关的假设清单（适配器实现依据）
 
