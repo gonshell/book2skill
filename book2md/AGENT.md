@@ -78,7 +78,7 @@
 
 **阶段 B —— 实测（需外部条件）**
 
-6. ✅ 网关实测（2026-10-26）：extract 实抽联测（相似度 98.75%）、`baseline run` 重抽比对（RC40 三态正确；图片指标有 run 间噪声、字符稳定）、**MinerU 版本远程核实 4.0.12**（`/v1/health`）+ 8/8 权重 sha256（ModelScope API）+ wrapper 端点面（FastAPI 19 端点）；剩 GPU/docker run/缓存路径须网关机采集（台账 C3/C4/C6）
+6. ✅ 网关实测（2026-10-26）：extract 实抽联测（相似度 98.75%）、`baseline run` 重抽比对（RC40 三态正确；图片指标有 run 间噪声、字符稳定）、MinerU 版本 4.0.12、8/8 权重 sha256、wrapper 端点面，并登机核实 **GPU（2×TITAN X 12GB / 驱动 535.309.01 / basic 档仅占 784 MiB）与完整 docker run 参数（`mineru:pascal` + 官方 `mineru-kit api-server`，零挂载）**；仅剩模型镜像内精确目录一条 `find` 未记（台账 C6）
 7. ⬜ 化学书实战：第一本化学教材端到端转换（依赖化学 PDF + 网关）
 
 **阶段 C —— 联调（实测全部完成后）**

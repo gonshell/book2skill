@@ -43,7 +43,8 @@
 | 底层 MinerU 版本 | `mineru` 包版本 | ✅ **已核实（2026-10-26 远程）**：**4.0.12**（`/v1/health` `version` 字段；`/v1/tiers`、`/v1/models` 三处一致；无 `/version` 端点，版本在 `/v1/health`） | `/v1/health` |
 | 模型权重 | basic 档 torch 8 权重，官方仓 `OpenDataLab/MinerU-4_models_torch`（854 MB） | ✅ **已核实：8/8 sha256**（ModelScope API 2026-10-26）；明细见工作区《MinerU自托管实操手册》§3.2 | ModelScope API |
 | 服务端补丁 | `mineru/model/ocr/image.py` 裁剪维度补丁（`img_crop_width/height → int(max(1.0, round(...)))`），源见工作区 `patch3/4/5_mineru_image.py`（AST 幂等、同版本重装后重新应用） | ⚠️ 已知存在，哈希待登记 | patch_id: `img-crop-min1` |
-| GPU 规格 | 型号 / 显存 / 驱动（经验下限：算力 ≥7.0、显存 6–8GB；**实测 CC 6.1 已跑通 basic 档**，以实测为准） | ❌ 待网关运维核实（`nvidia-smi`） | — |
+| GPU 规格 | 型号 / 显存 / 驱动 | ✅ **已核实（2026-10-26 `nvidia-smi`）**：2 × NVIDIA TITAN X (Pascal)，各 12 GB，驱动 535.309.01，CC 6.1；**basic 档实测仅占 ≈784 MiB 单卡**（原文"6–8 GB / 算力 ≥7.0"经验值过于保守，作废） | §1.2 手册 |
+| 部署形态 | 镜像 / 启动命令 / 挂载 | ✅ **已核实（2026-10-26 `docker inspect`）**：镜像 `mineru:pascal`，容器 `mineru-api`；`mineru-kit api-server --host 0.0.0.0 --port 8000 --tier basic --disable-image-analysis`；`--gpus all`、`-p 8000:8000`、**零挂载**（模型烘焙进镜像）、`restart unless-stopped` | 手册 §4.1 |
 | 服务限额 | 1000 页/文件、200 MB/文件、100 文件/任务、`max_concurrent_jobs: 1`、文件保留 1 天 | ✅ **已核实（2026-10-26 远程）** | `/v1/usage` |
 
 > ⚠️ **版本已核实（4.0.12）后的纪律仍然有效**：`tbp baseline` 是**唯一**的漂移防线——
@@ -52,10 +53,10 @@
 > `provenance.json` 版本字段自 2026-10-26 起可填 `4.0.12`（源：`/v1/health`）。
 
 > **核实尝试记录**：① 2026-10-24 网关不可达（探测超时、ping 全丢包），当时无法定版本；
-> ② 2026-10-26 网关恢复，`/openapi.json`、`/v1/health`、`/v1/tiers`、`/v1/models`、
-> `/v1/usage` 实测成功，完成上表三项远程核实。**仍须网关机采集**：GPU 型号/显存/驱动
-> （`nvidia-smi`）、docker run 参数（`docker inspect`）、模型缓存路径（`ls ~/.cache/modelscope`）、
-> wrapper 源码位置。
+> ② 2026-10-26 远程：`/openapi.json`、`/v1/health`、`/v1/tiers`、`/v1/models`、`/v1/usage`
+> 实测成功；③ 同日网关机：`docker inspect` + `nvidia-smi` 核实部署形态与 GPU。
+> 服务端为 **MinerU 官方 `mineru-kit api-server`**（非自研 wrapper）。
+> **唯一残留**：模型在镜像内的精确目录（`MOUNTS=[]`，`~/.cache/modelscope` 为空壳）。
 
 ## 4. 客户端对网关的假设清单（适配器实现依据）
 
