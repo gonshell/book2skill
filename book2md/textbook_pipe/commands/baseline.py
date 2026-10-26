@@ -22,7 +22,7 @@ from textbook_pipe.commands._envelope import emit
 from textbook_pipe.commands._endpoints import resolve_api
 from textbook_pipe.extractors import merge, mineru
 from textbook_pipe.engine.inspectors import detectors
-from textbook_pipe.engine import render
+from textbook_pipe.engine import render, rules
 from textbook_pipe.exit_codes import EXIT_BACKEND, EXIT_CONTRACT, EXIT_MISSING, EXIT_OK, EXIT_USAGE
 
 MARKER_RE = re.compile(r"<!--\s*===== 原书物理页 (\d+)-(\d+)")
@@ -73,14 +73,26 @@ def _select_segments(segs, pages):
     return picked
 
 
-def _measure(book, text, tmp_root):
-    """单块指标：字符数 + D1–D10 + KaTeX 错误/缺图。落盘临时目录跑探测器与渲染。"""
+def _measure(book, text, tmp_root, img_src=None):
+    """单块指标：字符数 + D1–D10 + KaTeX 错误/缺图。落盘临时目录跑探测器与渲染。
+
+    img_src：该块配套图片目录（init 传 out/<book>/images，run 传重抽产物的 images）。
+    只复制 text 实际引用到的图片——不复制会把 D 规则全部误判为"悬空引用"，
+    使基线指标掺入测量环境假阳性（整册化学书实测 22 处）。
+    """
     src = os.path.join(tmp_root, "src", book)
     out = os.path.join(tmp_root, "out")
     shutil.rmtree(tmp_root, ignore_errors=True)
     os.makedirs(src, exist_ok=True)
     with open(os.path.join(src, "markdown.md"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(_strip_markers(text))
+    if img_src and os.path.isdir(img_src):
+        dst = os.path.join(src, "images")
+        for name in sorted(set(IMG_RE.findall(text))):
+            fp = os.path.join(img_src, name)
+            if os.path.isfile(fp):
+                os.makedirs(dst, exist_ok=True)
+                shutil.copy2(fp, os.path.join(dst, name))
     det = detectors.run(source_dir=os.path.join(tmp_root, "src"), books=[book])
     with _quiet():
         rr = render.run(books=[book], variant="reader",
@@ -172,7 +184,7 @@ def _cmd_init(args, t0):
         img_src = os.path.join(out_root, book, "images")
         for seg in picked:
             with tempfile.TemporaryDirectory(prefix="tbp-base-") as tmp:
-                m = _measure(book, seg["text"], tmp)
+                m = _measure(book, seg["text"], tmp, img_src=img_src)
             seg_name = "seg_%d-%d.md" % (seg["s"], seg["e"])
             with open(os.path.join(book_dir, seg_name), "w",
                       encoding="utf-8", newline="\n") as fh:
@@ -276,10 +288,18 @@ def _cmd_run(args, t0):
                             t0=t0)
             tmp_out = os.path.join(tmp_dir, "out")
             merge.merge_one(book, s, e, os.path.join(tmp_dir, "blocks"), tmp_out)
+            # 口径对齐（关键）：init 基线取自 out/ 的**修复后**产物，重抽产物必须过同一套
+            # S1–S20 才能比——否则 S12 清掉的 HTML 表格标记、S16 降级的坏公式会被误判为
+            # 后端漂移（整册化学书实测假漂移 +67% 字符、D7 标签泄漏 0→23）。
+            with _quiet():
+                rules.run(books=[book], source_dir=os.path.join(tmp_dir, "blocks"),
+                          output_dir=tmp_out,
+                          quarantine_dir=os.path.join(tmp_dir, "quarantine"))
             seg_md = os.path.join(tmp_out, book, "markdown.md")
             text = open(seg_md, encoding="utf-8").read()
             with tempfile.TemporaryDirectory(prefix="tbp-bm-") as tmp:
-                cur = _measure(book, text, tmp)
+                cur = _measure(book, text, tmp,
+                               img_src=os.path.join(tmp_out, book, "images"))
             shutil.rmtree(tmp_dir, ignore_errors=True)
             checked += 1
 
