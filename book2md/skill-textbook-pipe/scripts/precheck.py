@@ -39,6 +39,31 @@ def _sh(cmd):
         return None, [str(ex)]
 
 
+def _probe_endpoint(endpoint):
+    """探活网关：/v1/health（官方 mineru-kit）优先，回退 /version（自研 wrapper）。
+
+    返回 (ok, detail)。detail 带版本号，便于与 extract 账本指纹对照。
+    """
+    import urllib.error
+    import urllib.request
+
+    last = ""
+    for path in ("/v1/health", "/version"):
+        url = endpoint.rstrip("/") + path
+        try:
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                body = resp.read(400).decode("utf-8", "replace")
+            try:
+                payload = json.loads(body)
+                ver = payload.get("version") or payload.get("data", {}).get("version")
+            except ValueError:
+                ver = None
+            return True, "%s%s -> 200%s" % (endpoint, path, (" version=%s" % ver) if ver else "")
+        except (urllib.error.URLError, OSError, ValueError) as ex:
+            last = "%s%s -> %s" % (endpoint, path, ex)
+    return False, last
+
+
 def main():
     t0 = time.time()
     ap = argparse.ArgumentParser()
@@ -99,21 +124,23 @@ def main():
             hint="tbp config set workspace <可写路径>")
 
     # ⑤ 端点可达（可选，失败仅警告不致命）
+    # 解析走核心包 resolve_api()（无参：环境变量 > ~/.tbp/config.json），
+    # 探活走 /v1/health（版本端点；/version 在官方 mineru-kit 上不存在），
+    # 回退 /version 兼容自研 wrapper。
     endpoint_rc = None
     if args.check_endpoint:
         rc, out = _sh([sys.executable, "-c",
                        "from textbook_pipe.commands._endpoints import resolve_api;"
-                       "import os;"
-                       "print(resolve_api(os.getcwd()) or '')"])
+                       "print(resolve_api() or '')"])
         endpoint = out[0] if rc == 0 and out else ""
         if not endpoint:
             add("endpoint", False, "未配置",
                 hint="设 TBP_BACKEND_API 或 tbp config set backend_endpoint",
                 fatal=False)
         else:
-            crc, cout = _sh(["curl", "-sf", "-m", "10", endpoint.rstrip("/") + "/version"])
-            endpoint_rc = crc
-            add("endpoint", crc == 0, "%s -> %s" % (endpoint, cout[0] if cout else "不可达"),
+            ok, detail = _probe_endpoint(endpoint)
+            endpoint_rc = 0 if ok else 30
+            add("endpoint", ok, detail,
                 hint="网关不可达：离线命令（run/scan/report）仍可用，抽取/基准重抽不可用",
                 fatal=False)
 

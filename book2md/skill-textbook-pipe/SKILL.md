@@ -17,6 +17,8 @@ python skill-textbook-pipe/scripts/precheck.py [--workspace <路径>] [--check-e
 
 输出 JSON 信封。`exit_code != 0` 时按 `checks[].hint` 处置后重跑；端点不可达
 （EXIT 30）只警告不阻塞（离线命令 run/scan/report 仍可用）。
+`--check-endpoint` 探活 `/v1/health`（官方 mineru-kit 无 `/version`），detail 带版本号
+（当前网关 4.0.12），可与 `provenance.json` 的抽取指纹对照。
 
 ## 1. 标准流程
 
@@ -34,12 +36,17 @@ python skill-textbook-pipe/scripts/precheck.py [--workspace <路径>] [--check-e
 **不要自己拼路径**）；进度日志在 stderr。退出码：0 成功 · 10 质量门未过 ·
 20 配置缺失 · 30 网关失败 · 40 契约违约 · 50 资源缺失。
 
+工作区只能二选一指定：**顶层**参数 `tbp --workspace <ws> <命令> ...`（写在子命令后会被拒）
+或 `tbp config set workspace <ws>`；子命令内不要再传 `--workspace`。
+
 ## 2. 转换完成后（必做）
 
 1. 交付核验：`python scripts/verify_delivery.py --workspace <ws> --book <册名>`
+   （核对 out/<book>/ 清单 + 双版 HTML 自包含；HTML 实际位于 out/<book>/html|kb_html/）
 2. 若 issues.json 有 B/C 档存疑项，生成复核表：
    `python scripts/adjudicate_sheet.py --workspace <ws> --book <册名>`
-   C 档处置流程读 references/process.md §裁定。
+   issues.json 即单一事实源：B 档=探测器命中（带行号），C 档=S16 已降级的损坏公式
+   （带原串摘录，须按 PDF 补录）。C 档处置流程读 references/process.md §裁定。
 3. 向用户汇报：产物清单（present_files 交付 HTML 与 markdown）+ issues 分级计数 +
    ⚠️ 提醒"C 档内容未经人工复核不得视为定稿"。
 

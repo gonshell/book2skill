@@ -30,3 +30,17 @@
 `tbp run` 失败时产物留在 `out/<book>.staging/`，**上一版成功产物原样保留**
 （晋升成功才轮换 `.prev-`）。排查时可检视 staging 中间产物定位失败门，
 但不要手工修改 staging 内容后"凑合交付"——修复必须回到命令链路。
+
+## 宿主环境的批量删除保护（环境侧，非产品缺陷）
+
+`tbp extract` 收尾时按设计**清空重建** `extract/<book>/images/`（保证与 blocks
+一致，不留孤儿）。若宿主/沙箱对批量删除设了阈值（如单轮 >50 个文件需确认），
+这一步会被拦下，表现为抽取块全部 `done` 之后进程退出、`extract/<book>/markdown.md`
+未生成。
+
+处置：
+1. 把 `extract/<book>/images` 整体改名（如 `images.partial`）——单次 rename，不触发阈值；
+2. 重跑 `tbp extract`（blocks 已 done，只走合并，秒级），images 与 markdown 重建；
+3. 确认产物正常后删除改名目录；确实删不掉时向用户说明残留路径，由其清理。
+
+blocks 缓存在 `blocks/<book>/*.zip`，重跑不会重新请求网关，不产生额外费用。

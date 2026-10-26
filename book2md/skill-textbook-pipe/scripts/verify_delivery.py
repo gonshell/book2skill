@@ -20,10 +20,11 @@ EXIT_OK = 0
 EXIT_GATE = 10
 EXIT_MISSING = 50
 
-# 交付清单（核心包 run 产物；html/kb_html 在工作区级）
-BOOK_FILES = ["markdown.md", "issues.json", "qa_gate.log"]
+# 交付清单（核心包 run 产物）
+BOOK_FILES = ["markdown.md", "issues.json", "qa_gate.log", "TOC.md", "质检报告.md"]
 BOOK_DIRS = ["images"]
-WS_FILES = []          # TOC.md / 质检报告.md / provenance.json 按实际产物存在性核对
+# 条件产物：存在则记入 checks，缺失不判缺口
+BOOK_FILES_OPTIONAL = ["provenance.json", "page_map.md", "broken_formulas.tsv"]
 HTML_RE = re.compile(r'(src|href)="(?!data:|#)([^"]+)"')
 
 
@@ -60,15 +61,23 @@ def main():
         checks.append({"name": "dir:%s" % d, "ok": ok, "count": max(n, 0)})
         if not ok:
             gaps.append("目录为空或缺失 out/%s/%s" % (args.book, d))
+    for f in BOOK_FILES_OPTIONAL:
+        checks.append({"name": "optional:%s" % f,
+                       "ok": True,
+                       "present": os.path.isfile(os.path.join(book_dir, f))})
 
-    # HTML 产物（工作区级 html/ kb_html/<book>.html 或 out/<book>/ 同名）
+    # HTML 产物：核心包 run 落在 out/<book>/<variant>/<book>.html
+    # （兼容历史/手工布局：工作区级 <variant>/、out/<book>/ 同名）
     html_hits = {}
     for variant in ("html", "kb_html"):
-        p = os.path.join(args.workspace, variant, "%s.html" % args.book)
-        if not os.path.isfile(p):
-            p = os.path.join(book_dir, "%s.html" % args.book)
-        found = os.path.isfile(p)
-        html_hits[variant] = {"found": found, "path": p if found else None}
+        candidates = [
+            os.path.join(book_dir, variant, "%s.html" % args.book),
+            os.path.join(args.workspace, variant, "%s.html" % args.book),
+            os.path.join(book_dir, "%s.html" % args.book),
+        ]
+        p = next((c for c in candidates if os.path.isfile(c)), None)
+        found = p is not None
+        html_hits[variant] = {"found": found, "path": p}
         if not found:
             gaps.append("缺 %s 版 HTML（%s.html）" % (variant, args.book))
 

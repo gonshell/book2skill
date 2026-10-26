@@ -203,7 +203,8 @@ def run(source_dir=None, books=None):
     """D1–D10 探测器套件（行为保持版入口，自 main() 参数化）。
 
     source_dir: final 目录（含 <book>/markdown.md 与 <book>/images/）
-    返回 {"per_detector": {名称: 命中数}, "total": 总数}；报告走 stderr。
+    返回 {"per_detector": {名称: 命中数}, "details": {名称: [命中串]}, "total": 总数}；
+    报告走 stderr。details 供 issues.json 落定位信息（命中串形如 "册名 L行号：描述"）。
     """
     global _SRC_DIR
     if not source_dir:
@@ -212,6 +213,7 @@ def run(source_dir=None, books=None):
     books = books or BOOKS
     grand = 0
     per = {}
+    details = {}
     for name, fn in [("D1 退化重复", d1), ("D2 数集记号词典", d2),
                      ("D3 符号误识专项", d3), ("D4 图片引用完整性", d4),
                      ("D5 渲染完整性", d5), ("D6 水印图内容检测", d6),
@@ -219,18 +221,21 @@ def run(source_dir=None, books=None):
                      ("D9 小节图标 alt", d9), ("D10 悬空引用", d10)]:
         p("===== %s =====" % name)
         total = 0
+        detail = []
         for b in books:
             md = open(os.path.join(_SRC_DIR, b, "markdown.md"), encoding="utf-8").read()
             hits = fn(book=b) if fn in (d4, d6) else fn(md, b)
             total += len(hits)
+            detail.extend(hits)
             for h in hits[:15]:
                 p("  " + h)
         p("  小计：%d 处" % total)
         p()
         per[name] = total
+        details[name] = detail
         grand += total
     p("########## 总计 %d 处 ##########" % grand)
-    return {"per_detector": per, "total": grand}
+    return {"per_detector": per, "details": details, "total": grand}
 
 
 if __name__ == "__main__":
