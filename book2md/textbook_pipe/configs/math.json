@@ -1,0 +1,5 @@
+{
+  "subject": "math",
+  "rules_pack": "packs/math.json",
+  "note": "2026-10-26 系统级 run 通测创建；rules_pack 机制未接线，仅占位引用"
+}

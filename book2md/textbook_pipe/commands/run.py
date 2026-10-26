@@ -176,6 +176,14 @@ def _gate_scan3_toc(book, staging, log, ctx):
     qa_md += "\n> 渲染无误 ≠ 内容与原书一致：以上命中项为人工复核队列。\n"
     open(os.path.join(staging, book, "质检报告.md"), "w", encoding="utf-8").write(qa_md)
 
+    # 页码映射表（postprocess §3 语义，格式逐字保持：final/<book>/page_map.md）
+    if pmap:
+        pmd = "# %s 页码映射表（物理页 → 教材页码）\n\n" % book
+        pmd += "| 物理页 | 教材页 |\n| --- | --- |\n"
+        for phys in sorted(pmap):
+            pmd += "| %s | %s |\n" % (phys, pmap[phys])
+        open(os.path.join(staging, book, "page_map.md"), "w", encoding="utf-8").write(pmd)
+
     issues = _issues.collect(book, staging, books=[book])
     _issues.write(issues, os.path.join(staging, book, "issues.json"))
 
