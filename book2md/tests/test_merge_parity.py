@@ -18,6 +18,10 @@ import unittest
 
 from textbook_pipe.extractors import merge
 from textbook_pipe.engine import reporting
+try:                                       # python tests/x.py（run_tests.sh 口径）
+    from parity_util import unexpected_delta
+except ImportError:                        # python -m unittest tests.x
+    from tests.parity_util import unexpected_delta
 
 SRC = os.environ.get("TBP_PARITY_SOURCE")
 BOOKS = ["选择性必修第三册", "选择性必修第二册", "选择性必修第一册", "必修第二册", "必修第一册"]
@@ -46,9 +50,15 @@ class MergeParityTest(unittest.TestCase):
                     got = _norm(open(p, "rb").read())
                     want = _norm(open(os.path.join(SRC, "final_backup_20261022",
                                                    book + ".markdown.md"), "rb").read())
-                    self.assertEqual(len(got), len(want),
-                                     "%s 字符数不一致: got=%d want=%d" % (book, len(got), len(want)))
-                    self.assertEqual(got, want, "%s 内容逐字节不一致" % book)
+                    if got != want:
+                        # 已声明改动：merge 现会把 HTML 表格 src="images/..." 引用
+                        # 与普通引用同步改写（历史漏改 → 表内图悬空）。逐行登记在
+                        # fixtures/parity_delta_allowlist.json 的 merge 段。
+                        unexpected = unexpected_delta(got, want, "merge", book)
+                        if unexpected is None:
+                            print("    [已声明改动] %s 差异全部登记（表格 src 引用同步改写）" % book)
+                        else:
+                            self.fail("%s 存在未登记的内容差异：\n%s" % (book, unexpected))
                     got_imgs = set(os.listdir(os.path.join(tmp, book, "images")))
                     want_imgs = set(os.listdir(os.path.join(SRC, "final", book, "images")))
                     # 口径：final ⊆ 合并输出（0 缺失）。合并输出多出的部分 = 水印图等

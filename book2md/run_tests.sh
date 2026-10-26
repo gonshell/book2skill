@@ -29,6 +29,7 @@ run() {
 run test_extraction_contract
 run test_extract_onboard_smoke
 run test_run_smoke
+run test_s16_and_inline_tags
 run test_baseline_smoke
 run test_skill_scripts
 

@@ -65,7 +65,20 @@ def embed_img(rel, cache, book):
     return tag
 
 
+# 教材抽取产物中的原生行内标签白名单：上标/下标/下划线，均为无属性的纯语义标签。
+# 曾对正文整体 esc，导致 <sup>②</sup> 一类原样露出成可见文本（化学书 74 处）。
+# 只放行这三种严格形态，避免误伤数学里的 < > 比较运算（如 $a<b$）。
+_SAFE_TAG_RE = re.compile(r"</?(?:sup|sub|u)>")
+
+
 def prose_inline(seg, cache, book):
+    keep = []
+
+    def _stash(m):
+        keep.append(m.group(0))
+        return "@@H%d@@" % (len(keep) - 1)
+
+    seg = _SAFE_TAG_RE.sub(_stash, seg)
     out, pos = [], 0
     for m in IMG_RE.finditer(seg):
         out.append(esc(seg[pos:m.start()]))
@@ -75,6 +88,8 @@ def prose_inline(seg, cache, book):
     s = "".join(out)
     s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
     s = s.replace("\\*", "*").replace("\\%", "%")
+    if keep:
+        s = re.sub(r"@@H(\d+)@@", lambda m: keep[int(m.group(1))], s)
     return s
 
 

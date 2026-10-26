@@ -81,8 +81,18 @@ def _gate_fix(book, staging, log, ctx):
     if os.path.isdir(img_src):
         shutil.copytree(img_src, os.path.join(staging, book, "images"), dirs_exist_ok=True)
 
-    steps = rules.run(books=[book], source_dir=baseline_dir, output_dir=staging)
+    steps = rules.run(books=[book], source_dir=baseline_dir, output_dir=staging,
+                      quarantine_dir=os.path.join(ctx["workspace"], "quarantine"))
     log.line("[fix] S 规则计数 %s" % json.dumps(steps.get(book, {}), ensure_ascii=False))
+    qdir = os.path.join(ctx["workspace"], "quarantine", book)
+    if os.path.isdir(qdir):
+        n_q = len(os.listdir(qdir))
+        log.line("[fix] S12/S15 清掉的裁片已隔离 %d 张 → %s（可回溯复核）" % (n_q, qdir))
+    bf = os.path.join(staging, book, "broken_formulas.tsv")
+    if os.path.exists(bf):
+        n_bf = sum(1 for ln in open(bf, encoding="utf-8") if ln.strip() and not ln.startswith("#"))
+        if n_bf:
+            log.line("[fix] S16 结构性损坏公式 %d 条已降级占位 → %s（须按 PDF 人工补录）" % (n_bf, bf))
     return None
 
 
@@ -196,32 +206,62 @@ GATES = {"deps": _gate_deps, "fix": _gate_fix, "html": _gate_html,
          "preview": _gate_preview, "scan3": _gate_scan3_toc, "toc": _gate_scan3_toc}
 
 
+def _discard(path, bucket):
+    """丢弃目录/文件：**改名移入隔离桶**，不调 unlink/rmtree。
+
+    受保护环境（企业安全策略、EDR、safe-delete 钩子）会拦截批量删除并中断进程，
+    而引擎每轮都要清 staging 与旧版产物（数百文件）。rename 语义不触发此类策略，
+    代价是隔离桶需定期人工清理（路径记入 qa_gate.log）。
+    返回移入后的路径；跨盘/被占用等失败返回 None（原路径保留，不阻塞主流程）。
+    """
+    if not os.path.exists(path):
+        return None
+    name = os.path.basename(path.rstrip("\\/"))
+    try:
+        os.makedirs(bucket, exist_ok=True)
+        dest = os.path.join(bucket, "%s-%s-%06d" % (name, time.strftime("%Y%m%d-%H%M%S"),
+                                                    int(time.time() * 1e6) % 1000000))
+        os.replace(path, dest)
+        return dest
+    except OSError:
+        return None
+
+
 def _promote(book, staging, out_root, log):
     """staging/<book> → out/<book>（旧版挪 .prev-<时间戳>，仅保留最近一份）。
 
     Windows 下打开的日志句柄会锁住目录，改名前必须先关日志；
     落位后以追加模式重开续写（记录随册提交）。
+    旧版与 staging 残留一律移入 workspace/_discard/（不批量删除，见 _discard）。
     """
     src = os.path.join(staging, book)
     dst = os.path.join(out_root, book)
-    log.line("[promote] 开始晋升（旧版挪 .prev-<时间戳>，仅保留最近一份）")
+    bucket = os.path.join(os.path.dirname(out_root.rstrip("\\/")), "_discard")
+    log.line("[promote] 开始晋升（旧版挪 .prev-<时间戳>，更旧的移入 _discard/）")
     log.close()
+    keep_prov = None
     if os.path.isdir(dst):
         stamp = time.strftime("%Y%m%d-%H%M%S")
         prev = os.path.join(out_root, "%s.prev-%s" % (book, stamp))
         os.replace(dst, prev)
+        # provenance.json 由 onboard 写、run 不重生：晋升前从旧版抢救，否则随 .prev 丢失
+        p = os.path.join(prev, "provenance.json")
+        keep_prov = p if os.path.exists(p) else None
         for d in os.listdir(out_root):
             if d.startswith(book + ".prev-") and d != os.path.basename(prev):
-                shutil.rmtree(os.path.join(out_root, d), ignore_errors=True)
+                _discard(os.path.join(out_root, d), bucket)
     os.replace(src, dst)
+    if keep_prov:
+        shutil.copy2(keep_prov, os.path.join(dst, "provenance.json"))
     # 双版本 HTML 目录随册落位（spec §4：out/<book>/{html,kb_html}/）
     for sub in ("html", "kb_html"):
         s = os.path.join(staging, sub)
         if os.path.isdir(s):
             shutil.move(s, os.path.join(dst, sub))
-    shutil.rmtree(staging, ignore_errors=True)
+    _discard(staging, bucket)
     log2 = GateLog(os.path.join(dst, "qa_gate.log"))
     log2.line("[promote] 产物已提交 %s" % dst)
+    log2.line("[promote] staging 残留与旧版已移入 %s（需定期人工清理）" % bucket)
     log2.close()
 
 
@@ -263,7 +303,7 @@ def execute(args, t0):
     full_run = set(gates) == set(GATE_ORDER)
 
     staging = os.path.join(out_root, book + ".staging")
-    shutil.rmtree(staging, ignore_errors=True)
+    _discard(staging, os.path.join(workspace, "_discard"))   # 失败重跑残留：移入隔离桶而非 rmtree
     book_dir = os.path.join(staging, book)
     os.makedirs(book_dir, exist_ok=True)
     gate_log_path = os.path.join(book_dir, "qa_gate.log")

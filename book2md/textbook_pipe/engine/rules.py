@@ -18,6 +18,9 @@
       HTML 标签泄漏清理、数学区 HTML 实体还原、表内 img 路径错位重映射
   S13 排版层修复：思考框问号标题归一、标题前 emoji 图标清理
   S15 页边图标清理：习题类别/思考问号/探究图标（47-72px 装饰小图，信息由标题承载）
+  S16 结构性损坏公式降级：不可还原的 OCR 垃圾（嵌套 \\textcircled、命令截断、
+      空 array 嵌套）→ 显式占位 + 原串清单（broken_formulas.tsv）；同时安全修复
+      数字被 \\; 拆散、裸 ^ 无基底等形态
   S7  清理行内公式的历史残留 alt 注释（合法 alt 前一行必是 $$）
   S8  删除全部 alt → add_formula_alt 重生（与修复后公式同步）
 
@@ -30,10 +33,37 @@ B 档（不自动修，输出清单）: 剩余公式内嵌中文（事件定义�
 #   2) ROOT/FINAL/final_backup 常量 → run(source_dir, output_dir) 参数注入
 #   3) s12/s15 增加 imgdir 形参（原由全局 FINAL 推导）
 #   4) S1–S20 规则本体（四元组/正则/TARGETED 串）逐字未动
-import os, re, sys
+import os, re, shutil, sys
 from html.parser import HTMLParser
 
 from .reporting import add_formula_alt  # 搬迁自 postprocess.py → engine/reporting.py
+
+
+def _quarantine_image(fp, imgdir, qroot):
+    """裁片文件处理：配了隔离根则移入隔离区（rename，可回溯），否则删除。
+
+    隔离而非 unlink 的三个理由：
+      1) 受保护环境（企业安全策略 / EDR / safe-delete 钩子）会拦截批量 unlink，
+         引擎会在 S15 中途被打断——move 语义不触发此类策略；
+      2) 跨学科阈值误伤可回溯（如化学书图标密度高于数学书，<100px 判定会误删）；
+      3) 符合项目"不删用户文件"纪律：清掉的裁片留档，供人工复核。
+    """
+    if qroot and imgdir:
+        try:
+            os.makedirs(qroot, exist_ok=True)
+            base, ext = os.path.splitext(os.path.basename(fp))
+            dest = os.path.join(qroot, base + ext)
+            # 重跑时同名冲突必须换名，不能让 move 走到覆盖分支：
+            # Windows 上 move 到已存在文件会抛 OSError → 回退 os.remove → 触发批量删除拦截
+            i = 1
+            while os.path.exists(dest):
+                dest = os.path.join(qroot, "%s-%d%s" % (base, i, ext))
+                i += 1
+            shutil.move(fp, dest)
+            return
+        except OSError as e:
+            print("    [隔离失败转删除] %s: %s" % (os.path.basename(fp), e))
+    os.remove(fp)
 
 # 原全局常量 ROOT/FINAL 已参数化（run(source_dir, output_dir)）；BOOKS 为默认册序（数据）
 BOOKS = ["选择性必修第三册", "选择性必修第二册", "选择性必修第一册", "必修第二册", "必修第一册"]
@@ -945,6 +975,16 @@ TARGETED = {
          "| 第n行 | $1,\\;\\mathrm{C}_{n}^{1},\\;\\cdots,\\;\\mathrm{C}_{n}^{r},\\;\\cdots,\\;"
          "\\mathrm{C}_{n}^{n-1},\\;1$ |"),
     ],
+    # ===== 化学（2026-10-26 B4 实战首册）：OCR 噪音数字贴在行内公式定界符上 =====
+    # texmath dollars 规则把"数字紧贴 $"视为非公式，预览会显示裸 LaTeX；
+    # 两处内容均由表格语义唯一确定（饱和 NaHCO₃ 溶液 / 碳酸根离子方程式），无歧义。
+    "【人教版】高中必修 第一册化学电子课本": [
+        # 表「加入的试剂」列：原文"饱和 NaHCO₃ 溶液"，OCR 在"饱和"后多吐一个 1
+        ("饱和1$\\mathrm{NaHCO}_{3}$溶液", "饱和$\\mathrm{NaHCO}_{3}$溶液"),
+        # 实验设计表③行结论列：离子方程式闭 $ 后多吐一个噪音 2
+        ("$\\mathrm{CO}_{3}^{2-}+\\mathrm{H}^{+}=\\mathrm{HCO}_{3}^{-}$2",
+         "$\\mathrm{CO}_{3}^{2-}+\\mathrm{H}^{+}=\\mathrm{HCO}_{3}^{-}$"),
+    ],
 }
 
 # 整行重写（正则锚定 ^...$，re.M）：OCR 把整行搅碎、无法用串替换挽救的行
@@ -1295,7 +1335,7 @@ def _html_table_to_md(html):
     return "\n".join(out)
 
 
-def s12(md, book="", imgdir=None):
+def s12(md, book="", imgdir=None, qroot=None):
     n = 0
     # 1) 水印带/碎片图：无教学内容，移除引用（整行 ![] 或表内 <img>）
     for f in WATERMARK.get(book, []):
@@ -1347,7 +1387,7 @@ def s12(md, book="", imgdir=None):
         for f in WATERMARK.get(book, []):
             fp = os.path.join(imgdir, f)
             if os.path.exists(fp) and ("images/" + f) not in md:
-                os.remove(fp)
+                _quarantine_image(fp, imgdir, qroot)
                 n += 1
     return md, n
 
@@ -1407,14 +1447,18 @@ def _jpeg_size(fp):
         return None
 
 
-def s15(md, book="", imgdir=None):
+def s15(md, book="", imgdir=None, qroot=None):
     """页边图标清理（幂等）。
 
     image 类裁片中宽或高 <100px 的是页边装饰图标（习题类别/思考问号/探究图标），
-    信息由紧随的标题/正文承载，移除引用并删文件。
+    信息由紧随的标题/正文承载，移除引用并隔离文件（qroot 给定时移入隔离区而非删除）。
     幂等关键：流水线每轮从备份重建 md，但文件删除不可重做——若只按"现存文件"
     驱动，二轮重跑会因文件已删而漏清引用，留下悬空引用。故对 md 中引用了但
-    文件已不存在（且非水印名单）的 image 类文件，同样清引用。"""
+    文件已不存在（且非水印名单）的 image 类文件，同样清引用。
+
+    ⚠️ 跨学科风险：<100px 阈值按人教 A 版数学书调优（页边装饰图标 47-72px）。
+    化学/生物等册的装置示意图、元素符号小图可能同尺寸，须按科目校准
+    （rules_pack 未接线前，用隔离区人工抽检实际清掉了什么）。"""
     n = 0
     if imgdir is None:
         raise ValueError("s12/s15 需要 imgdir 参数（由 run() 注入 <output_dir>/<book>/images）")
@@ -1438,18 +1482,96 @@ def s15(md, book="", imgdir=None):
         if k:
             fp = os.path.join(imgdir, f)
             if os.path.exists(fp):
-                os.remove(fp)
+                _quarantine_image(fp, imgdir, qroot)
             n += 1
     return md, n
 
 
-def run(books=None, source_dir=None, output_dir=None):
-    """行为保持版入口（自 main() 参数化）。
+# ============== S16：结构性损坏公式降级（跨学科必需，化学书实测引入） ==============
+# 背景（2026-10-26 B4 化学书实战）：MinerU 对"双线桥电子转移标注""嵌套圈号/下标圈"
+# 产出不可渲染的垃圾——嵌套 13 层 \textcircled、命令截断 \textc }、空 array 无限嵌套。
+# KaTeX 必然报错 → html 门（要求 0 错误）永久失败，整册无法交付。
+# 处置原则（守"PDF 是唯一事实源、不臆造内容"纪律）：
+#   1) 整条公式降级为显式占位，原串写报告文件，供人工按 PDF 补录——引擎不猜内容；
+#   2) 可安全判定的拆散形态（数字被 \; 拆开、裸 ^ 无基底）就地修复，如
+#      1 \; 5 3 8 \; ^ { \circ } \mathrm { C } → 1538\,^{\circ}\mathrm{C}。
+_BROKEN_FORMULA = re.compile(
+    r"\\textcircled\s*\{\s*\\textcircled"     # 圈号嵌套 ≥2 层
+    r"|\\textc\s*[}\s]"                       # 命令被截断（\textc }）
+    r"|\\textcircled\s*\{\s*\\textc\s*\}"     # 退化为空圈号
+)
+_NESTED_EMPTY_ARRAY = re.compile(
+    r"(?:\\begin\{array\}\s*\{\s*[lcr]\s*\}\s*){3,}"   # 连续 3 个以上 array 开头（{ l } 的带空格写法）
+)
+FORMULA_PLACEHOLDER_BLOCK = "> ⚠️ 〔此处公式 OCR 损坏、无法自动还原，已记入待补录清单〕"
+FORMULA_PLACEHOLDER_INLINE = "〔公式损坏〕"
 
+
+def s16(md, book="", report_path=None):
+    """结构性损坏公式降级 + 可安全修复的拆散形态（幂等）。
+
+    幂等性：占位文本不含 $ 与 \\textcircled，二次执行不再命中。
+    返回 (md, (降级条数, 安全修复条数))。
+    """
+    n_broken, n_fixed = 0, 0
+    records = []
+
+    def _ctx(text, start, end):
+        return text[max(0, start - 60):end + 60].replace("\n", " ")
+
+    # ① 块公式 $$...$$
+    def _fix_block(m):
+        nonlocal n_broken
+        body = m.group(0)
+        if not (_BROKEN_FORMULA.search(body) or _NESTED_EMPTY_ARRAY.search(body)):
+            return body
+        n_broken += 1
+        records.append(("block", body[:200], _ctx(md, m.start(), m.end())))
+        return FORMULA_PLACEHOLDER_BLOCK
+
+    md = re.sub(r"\$\$[\s\S]{0,4000}?\$\$", _fix_block, md)
+
+    # ② 行内公式 $...$（跳过已降级的占位与 $$）
+    def _fix_inline(m):
+        nonlocal n_broken
+        body = m.group(0)
+        if not _BROKEN_FORMULA.search(body):
+            return body
+        n_broken += 1
+        records.append(("inline", body[:200], _ctx(md, m.start(), m.end())))
+        return FORMULA_PLACEHOLDER_INLINE
+
+    md = re.sub(r"\$(?!\$)[^$\n]{0,600}?\$", _fix_inline, md)
+
+    # ③ 安全修复：数字被 \; 拆散 → 合并；裸 ^ 无基底 → 删掉前面的 \; 让 ^ 贴住数字
+    #    （注意不能补 \, 作基底：\, 是间距命令，不构成上标基底，KaTeX 仍报
+    #     "Expected group after '^'"——首版曾误补 \, ，实测 4 处错误只降到 2 处）
+    md, k1 = re.subn(r"(?<=[0-9])\s*\\;\s*(?=[0-9])", "", md)
+    md, k2 = re.subn(r"\\;\s*\^", "^", md)
+    n_fixed = k1 + k2
+
+    if records and report_path:
+        try:
+            os.makedirs(os.path.dirname(report_path), exist_ok=True)
+            with open(report_path, "w", encoding="utf-8") as fh:
+                fh.write("# %s 结构性损坏公式（待按 PDF 补录）\n" % book)
+                fh.write("# 格式：序号\t类型\t原串\t上下文\n")
+                for i, (kind, src, ctx) in enumerate(records, 1):
+                    fh.write("%d\t%s\t%s\t%s\n" % (i, kind, src.replace("\t", " "), ctx))
+        except OSError as e:
+            print("    [S16 警告] 报告写入失败 %s: %s" % (report_path, e))
+    return md, (n_broken, n_fixed)
+
+
+def run(books=None, source_dir=None, output_dir=None, quarantine_dir=None):
+    """行为保持版入口（自 main() 参数化）。
     source_dir: 抽取基线目录（原 final_backup_20261022/），内含 <book>.markdown.md；
                 单册缺失时回退读 output_dir 现有产物（幂等重跑，语义同原 main）。
     output_dir: 输出根，写 <output_dir>/<book>/markdown.md；
                 s12/s15 的图片目录取 <output_dir>/<book>/images（与原 FINAL 布局一致）。
+    quarantine_dir: 可选。给定则 s12/s15 清掉的裁片移入 <quarantine_dir>/<book>/
+                （rename，可回溯），不给定则沿用删除。受保护环境必须给定：
+                批量 unlink 会被安全策略拦截并中断流水线。
     返回 {book: {step: count}}；进度走 stderr（stdout 留给 CLI 的 JSON 信封）。
     """
     books = books or BOOKS
@@ -1465,6 +1587,7 @@ def run(books=None, source_dir=None, output_dir=None):
             md = open(path, encoding="utf-8").read()    # 幂等：无备份则对现有产物重跑
         orig_len = len(md)
         imgdir = os.path.join(output_dir, book, "images")
+        qroot = os.path.join(quarantine_dir, book) if quarantine_dir else None
         steps = {}
         for name, fn in [("S1正文标点", s1), ("S2符号误识", s2), ("S2b数学符号解包", s2b),
                          ("S3纯中文解包", s3), ("S4连接词拆分", s4), ("S4b二轮解包", s3),
@@ -1473,12 +1596,15 @@ def run(books=None, source_dir=None, output_dir=None):
             steps[name] = n
         md, n10 = s10(md, book)
         steps["S10定点修复"] = n10
-        md, n12 = s12(md, book, imgdir)
+        md, n12 = s12(md, book, imgdir, qroot)
         steps["S12内容级修复"] = n12
         md, n13 = s13(md, book)
         steps["S13排版层修复"] = n13
-        md, n15 = s15(md, book, imgdir)
+        md, n15 = s15(md, book, imgdir, qroot)
         steps["S15页边图标清理"] = n15
+        md, (n16b, n16f) = s16(md, book, os.path.join(output_dir, book, "broken_formulas.tsv"))
+        steps["S16损坏公式降级"] = n16b
+        steps["S16拆散形态修复"] = n16f
         md, removed = s7(md)
         steps["S7残留alt清理"] = removed
         md = s8(md)

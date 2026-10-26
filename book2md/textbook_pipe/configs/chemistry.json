@@ -1,0 +1,6 @@
+{
+  "subject": "chemistry",
+  "toc_chapter_pattern": "^(第[一二三四五六七八九十]+章|第[一二三四五六七八九十]+节|实验活动\\s*\\d+|附录[ⅠⅡⅢⅣⅤⅥ]+)",
+  "rules_pack": "packs/chemistry.json",
+  "note": "2026-10-26 B4 化学书实战创建；toc_chapter_pattern 按人教版化学必修第一册目录实测格式（第一章　物质及其变化/第一节　…/实验活动1 …/附录Ⅰ …）；rules_pack 机制未接线，仅占位引用；引擎内置 S 规则为数学调优，化学书需人工抽检"
+}

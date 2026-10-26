@@ -11,13 +11,21 @@
 
 | 验收项 | 结论 | 复现方式 |
 |---|---|---|
-| 行为保持：五册修复产物逐字节一致 | ✅ | `tests/test_behavior_parity.py`（TBP_PARITY_SOURCE） |
+| 行为保持：五册修复产物一致（含 5 行已声明改动） | ✅ | `tests/test_behavior_parity.py`（TBP_PARITY_SOURCE） |
 | 行为保持：10 个 HTML 逐字节一致 | ✅ | `tests/test_render_parity.py`（约 10 分钟） |
 | 行为保持：3 份探测报告全文本一致 | ✅ | `tests/test_inspectors_parity.py` |
-| 行为保持：5 册合并输出一致 | ✅ | `tests/test_merge_parity.py` |
+| 行为保持：5 册合并输出一致（含 4 行已声明改动） | ✅ | `tests/test_merge_parity.py` |
 | 抽取契约（真实网关样例） | ✅ 8 例 | `tests/test_extraction_contract.py` |
 | 命令冒烟（extract/onboard/run/baseline 离线全流程） | ✅ 17 例 | 三套 smoke 测试 |
+| S16 损坏公式降级 + 行内标签白名单 | ✅ 13 例 | `tests/test_s16_and_inline_tags.py` |
 | 安装冒烟（wheel 安装 + KaTeX 资产随包 + 渲染端到端） | ✅ | 一次性 venv 已实证并删除 |
+
+> **已声明改动（2026-10-26，B4 化学书实战产出）**：引擎修复两个跨学科缺口后，数学书产物
+> 相对已验收 final 出现 **9 行**有意差异，逐行登记在
+> `tests/fixtures/parity_delta_allowlist.json`（`rules` 段 5 行 = S16③ 修复 OCR 拆散数字，
+> 如 `1.414\;3→1.4143`；`merge` 段 4 行 = HTML 表格 `src=` 引用同步改写，历史为悬空）。
+> 除登记项外**任何差异仍判失败**——白名单不是通行证，已用反例验证（未登记改动/行数变化/
+> 无白名单册三种情形均正确报错）。下次整册重跑时若刷新 final 基线，清空该文件即可。
 
 ### 欠账事项（QA debt）
 
@@ -27,6 +35,7 @@
 | 联调（WorkBuddy 技能壳端到端演练） | ❌ 未做 | P2 技能壳开工后 | |
 | 网关实抽联测（extract 真实抽取） | ✅ 2026-10-26 完成 | 试验册 p51-57 真实网关抽取，对历史基线相似度 98.75%，zip 契约完好；详见工作区 待确定事项台账.md B1 |
 | 基准回归实测（`tbp baseline run` 重抽比对） | ✅ 2026-10-26 完成（试验册） | init→run→RC40 三态正确；发现同版本重抽图片指标有噪声（18↔21）、字符稳定；整册基线需原始整书 PDF；详见台账 B2 |
+| 化学书实战（第一本化学教材端到端） | ✅ 2026-10-26 完成 | onboard 网关实抽 139 页 → run 七门全绿，产物齐全（双版 HTML 各 11.5 MB / 315 图 / TOC 268 条）。暴露并修复 3 缺口：merge 表格 `src=` 二次偏移漏改、S16 结构性损坏公式降级通道、md2html 转义白名单放行 sup/sub/u；详见台账 B4 |
 
 **提醒义务（强制）**：AI 在任何阶段性交付、总结、汇报时，**必须主动提醒**用户：
 "本项目除已列表的验收项外，系统级 run 通测、联调与网关侧功能均未实测。"——即使用户没有问。
@@ -79,7 +88,7 @@
 **阶段 B —— 实测（需外部条件）**
 
 6. ✅ 网关实测（2026-10-26）：extract 实抽联测（相似度 98.75%）、`baseline run` 重抽比对（RC40 三态正确；图片指标有 run 间噪声、字符稳定）、MinerU 版本 4.0.12、8/8 权重 sha256、wrapper 端点面，并登机核实 **GPU（2×TITAN X 12GB / 驱动 535.309.01 / basic 档仅占 784 MiB）与完整 docker run 参数（`mineru:pascal` + 官方 `mineru-kit api-server`，零挂载，模型落地 `/root/.mineru/models/`）**——MinerU 侧待确认项全部清零
-7. ⬜ 化学书实战：第一本化学教材端到端转换（依赖化学 PDF + 网关）
+7. ✅ 化学书实战（2026-10-26）：第一本化学教材端到端转换，onboard（网关实抽 139 页）→ run 七门全绿；修复 merge 表格引用偏移、新增 S16 损坏公式降级、md2html sup/sub/u 白名单（详见台账 B4）
 
 **阶段 C —— 联调（实测全部完成后）**
 

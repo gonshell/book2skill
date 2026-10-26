@@ -2,6 +2,9 @@
 """行为保持对账（搬迁施工准绳）：rules.py 五册自抽取基线干净重跑，
 与 gzsx-md/final 现有已验收产物**逐字节**比对。
 
+引擎有意演进产生的差异须逐行登记在 `fixtures/parity_delta_allowlist.json`
+（当前仅 S16③ 的 OCR 拆散数字修复，共 5 行对）；除此之外任何差异仍判失败。
+
 前置：环境变量 TBP_PARITY_SOURCE 指向 gzsx-md 原目录（只读，不作任何改动）；
 未设置时整批 skip（他机 / CI 无原件时不阻塞）。
 """
@@ -11,6 +14,10 @@ import tempfile
 import unittest
 
 from textbook_pipe.engine import rules
+try:                                       # python tests/x.py（run_tests.sh 口径）
+    from parity_util import unexpected_delta
+except ImportError:                        # python -m unittest tests.x
+    from tests.parity_util import unexpected_delta
 
 SRC = os.environ.get("TBP_PARITY_SOURCE")
 BOOKS = ["选择性必修第三册", "选择性必修第二册", "选择性必修第一册", "必修第二册", "必修第一册"]
@@ -35,16 +42,15 @@ class BehaviorParityTest(unittest.TestCase):
                               output_dir=out_root)
                     got = open(os.path.join(out_root, book, "markdown.md"), "rb").read()
                     want = open(os.path.join(SRC, "final", book, "markdown.md"), "rb").read()
-                    self.assertEqual(
-                        len(got), len(want),
-                        "%s 字符数不一致: got=%d want=%d" % (book, len(got), len(want)))
-                    self.assertEqual(got, want, "%s 内容逐字节不一致" % book)
-                    # 首个差异偏移，便于人工定位
-                    if got != want:  # pragma: no cover（assertEqual 已先行失败）
-                        for i, (a, b) in enumerate(zip(got, want)):
-                            if a != b:
-                                print("首个差异偏移:", i, got[max(0, i-40):i+40], want[max(0, i-40):i+40])
-                                break
+                    if got != want:
+                        # 引擎有意演进而产生的差异须逐行登记在
+                        # tests/fixtures/parity_delta_allowlist.json；
+                        # 未登记的差异（哪怕只差一个字符）仍然判失败。
+                        unexpected = unexpected_delta(got, want, "rules", book)
+                        if unexpected is None:
+                            print("    [已声明改动] %s 差异全部登记（S16③ 数字拆散修复）" % book)
+                            continue
+                        self.fail("%s 存在未登记的内容差异：\n%s" % (book, unexpected))
 
 
 if __name__ == "__main__":

@@ -55,8 +55,18 @@ def merge_one(name, s, e, blocks_root, out_root):
     bdir = os.path.join(out_root, name)
     os.makedirs(os.path.join(bdir, "images"), exist_ok=True)
     md = open(os.path.join(src, "markdown.md"), encoding="utf-8").read()
+    # 页码偏移改写（历史行为，行为保持：产物图片名 = zip 内 page 号 + s - 1）。
+    # ⚠️ 已知缺陷留档：MinerU zip 内的 page 号本就是绝对物理页（实测数学书块 47-86
+    # 的 page 号范围 46-85、化学书块 87-126 为 118/119），此处的 s+N-1 属二次偏移，
+    # 使成品图片名页码虚高（化学书 139 页却出现 page_205/255）。因五册历史产物均
+    # 按此命名，改动会破坏与 final 的逐字节一致，故暂保留；修复须整批重生成。
     md = re.sub(r"\(images/page_(\d+)_",
                 lambda m: f"(images/page_{s + int(m.group(1)) - 1}_", md)
+    # 表内 HTML <img src="images/page_N_..."> 同样改写：
+    # 历史上该形态漏改 → 文件名改了、引用没改 → 悬空引用（S12 的重映射只能按
+    # "唯一后缀候选"抢救，遇同后缀多候选即放弃；化学书 4 张表内图就是这样缺失的）
+    md = re.sub(r'(src="images/page_)(\d+)_',
+                lambda m: "%s%d_" % (m.group(1), s + int(m.group(2)) - 1), md)
 
     n_imgs = 0
     srcdir = os.path.join(src, "images")

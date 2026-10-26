@@ -1,0 +1,50 @@
+{
+ "rules": {
+  "必修第一册": [
+   {
+    "old": "可以发现，当 $\\sqrt{2}$ 的不足近似值 $X$ 和过剩近似值 $Y$ 逐渐逼近 $\\sqrt{2}$ 时， $5^{x}$ 和 $5^y$ 都趋向于同一个数，这个数就是 $5 ^ { \\sqrt { 2 } }$ .也就是说， $5^{\\sqrt{2}}$ 是一串逐渐增大的有理数指数幂 $5^{1.4} \\text{、 } 5^{1.41}$，$5^{1.414}$，$5^{1.4142}$，…和另一串逐渐减小的有理数指数幂 $5^{1.5}$，$5^{1.42}$，$5^{1.415}$，$5^{1.414\\;3}$ ，…逐步逼近的结果，它是一个确定的实数。这个过程可以用图4.1-1表示。",
+    "new": "可以发现，当 $\\sqrt{2}$ 的不足近似值 $X$ 和过剩近似值 $Y$ 逐渐逼近 $\\sqrt{2}$ 时， $5^{x}$ 和 $5^y$ 都趋向于同一个数，这个数就是 $5 ^ { \\sqrt { 2 } }$ .也就是说， $5^{\\sqrt{2}}$ 是一串逐渐增大的有理数指数幂 $5^{1.4} \\text{、 } 5^{1.41}$，$5^{1.414}$，$5^{1.4142}$，…和另一串逐渐减小的有理数指数幂 $5^{1.5}$，$5^{1.42}$，$5^{1.415}$，$5^{1.4143}$ ，…逐步逼近的结果，它是一个确定的实数。这个过程可以用图4.1-1表示。"
+   },
+   {
+    "old": "\\left[1.375-1.437\\;5\\right]=0.062\\;5<0.1,",
+    "new": "\\left[1.375-1.4375\\right]=0.0625<0.1,"
+   },
+   {
+    "old": "<!-- alt: [1.375-1.437\\;5]=0.062\\;5<0.1 -->",
+    "new": "<!-- alt: [1.375-1.4375]=0.0625<0.1 -->"
+   },
+   {
+    "old": "1. 用诱导公式求下列三角函数值(可用计算工具，第(3)(4)(6)题精确到0.0001):(1) $\\cos \\frac{65}{6} \\pi$； (2) $\\sin\\left( - \\frac{31}{4}\\pi \\right)$ (3) $\\cos(-1\\;182^{\\circ}13')$ (4) $\\sin 670^{\\circ}39'$； (5) $\\tan \\left( - \\frac{26\\pi}{3} \\right)$ (6) $\\tan 580^{\\circ}21'$。",
+    "new": "1. 用诱导公式求下列三角函数值(可用计算工具，第(3)(4)(6)题精确到0.0001):(1) $\\cos \\frac{65}{6} \\pi$； (2) $\\sin\\left( - \\frac{31}{4}\\pi \\right)$ (3) $\\cos(-1182^{\\circ}13')$ (4) $\\sin 670^{\\circ}39'$； (5) $\\tan \\left( - \\frac{26\\pi}{3} \\right)$ (6) $\\tan 580^{\\circ}21'$。"
+   }
+  ],
+  "必修第二册": [
+   {
+    "old": "于是，在全校学生中，“视力不低于 $5 . 0 ^ { \\circ }$ 的人数就是 $Y_{1} + Y_{2} + \\cdots + Y_{2\\;174}$ .可以发现，在总体中，“视力不低于 $5 . 0 ^ { \\circ }$ 的人数所占的比例 $P$ 就是学生视力变量的总体平均数",
+    "new": "于是，在全校学生中，“视力不低于 $5 . 0 ^ { \\circ }$ 的人数就是 $Y_{1} + Y_{2} + \\cdots + Y_{2174}$ .可以发现，在总体中，“视力不低于 $5 . 0 ^ { \\circ }$ 的人数所占的比例 $P$ 就是学生视力变量的总体平均数"
+   }
+  ]
+ },
+ "merge": {
+  "选择性必修第一册": [
+   {
+    "old": "<table><tr><td>图形</td><td>标准方程</td><td>焦点坐标</td><td>准线方程</td></tr><tr><td><img src=\"images/page_135_table_image_12_1.jpg\"/></td><td> $y^{2}=2px \\quad (p>0)$ </td><td> $\\left( \\frac{p}{2}, 0 \\right)$ </td><td> $x = - \\frac{p}{2}$ </td></tr><tr><td><img src=\"images/page_135_table_image_12_2.jpg\"/></td><td></td><td></td><td></td></tr><tr><td><img src=\"images/page_135_table_image_12_3.jpg\"/></td><td></td><td></td><td></td></tr><tr><td><img src=\"images/page_135_table_image_12_4.jpg\"/></td><td></td><td></td><td></td></tr></table>",
+    "new": "<table><tr><td>图形</td><td>标准方程</td><td>焦点坐标</td><td>准线方程</td></tr><tr><td><img src=\"images/page_261_table_image_12_1.jpg\"/></td><td> $y^{2}=2px \\quad (p>0)$ </td><td> $\\left( \\frac{p}{2}, 0 \\right)$ </td><td> $x = - \\frac{p}{2}$ </td></tr><tr><td><img src=\"images/page_261_table_image_12_2.jpg\"/></td><td></td><td></td><td></td></tr><tr><td><img src=\"images/page_261_table_image_12_3.jpg\"/></td><td></td><td></td><td></td></tr><tr><td><img src=\"images/page_261_table_image_12_4.jpg\"/></td><td></td><td></td><td></td></tr></table>"
+   }
+  ],
+  "必修第一册": [
+   {
+    "old": "<table><tr><td></td><td> $\\Delta > 0$ </td><td> $\\Delta = 0$ </td><td> $\\Delta < 0$ </td></tr><tr><td> $y=ax^{2}+bx+c (a>0)$ 的图象</td><td><img src=\"images/page_57_table_image_9_1.jpg\"/></td><td><img src=\"images/page_57_table_image_9_2.jpg\"/></td><td><img src=\"images/page_57_table_image_9_3.jpg\"/></td></tr><tr><td> $ax^{2}+bx+c=0\\ (a>0)$ 的根</td><td>有两个不相等的实数根 $x_{1}, x_{2} \\left( x_{1} < x_{2} \\right)$ </td><td>有两个相等的实数根 $x_{1} = x_{2} = - \\frac{b}{2a}$ </td><td>没有实数根</td></tr><tr><td> $ax^{2}+bx+c>0 (a>0)$ 的解集</td><td> $\\{ x \\mid x < x_{1}$ ,或 $x > x_{2}$ </td><td> $\\{ x \\mid x \\neq -\\frac{b}{2a} \\}$ </td><td>R</td></tr><tr><td> $ax^{2}+bx+c<0 (a>0)$ 的解集</td><td> $\\left\\{ x \\mid x_{1} < x < x_{2} \\right\\}$ </td><td> $\\mathcal { D }$ </td><td> $\\varnothing$ </td></tr></table>",
+    "new": "<table><tr><td></td><td> $\\Delta > 0$ </td><td> $\\Delta = 0$ </td><td> $\\Delta < 0$ </td></tr><tr><td> $y=ax^{2}+bx+c (a>0)$ 的图象</td><td><img src=\"images/page_103_table_image_9_1.jpg\"/></td><td><img src=\"images/page_103_table_image_9_2.jpg\"/></td><td><img src=\"images/page_103_table_image_9_3.jpg\"/></td></tr><tr><td> $ax^{2}+bx+c=0\\ (a>0)$ 的根</td><td>有两个不相等的实数根 $x_{1}, x_{2} \\left( x_{1} < x_{2} \\right)$ </td><td>有两个相等的实数根 $x_{1} = x_{2} = - \\frac{b}{2a}$ </td><td>没有实数根</td></tr><tr><td> $ax^{2}+bx+c>0 (a>0)$ 的解集</td><td> $\\{ x \\mid x < x_{1}$ ,或 $x > x_{2}$ </td><td> $\\{ x \\mid x \\neq -\\frac{b}{2a} \\}$ </td><td>R</td></tr><tr><td> $ax^{2}+bx+c<0 (a>0)$ 的解集</td><td> $\\left\\{ x \\mid x_{1} < x < x_{2} \\right\\}$ </td><td> $\\mathcal { D }$ </td><td> $\\varnothing$ </td></tr></table>"
+   },
+   {
+    "old": "<table><tr><td></td><td>_ $0<a<1$ </td><td> $a > 1$ </td></tr><tr><td>图象</td><td><img src=\"images/page_123_table_image_7_1.jpg\"/></td><td> $y = a^{x}$ <img src=\"images/page_123_table_image_7_2.jpg\"/></td></tr><tr><td>定义域</td><td colspan=2>R</td></tr><tr><td>值域</td><td colspan=2> $(0, +\\infty)$ </td></tr><tr><td rowspan=2>性质</td><td colspan=2>(1)过定点(0，1)，即 $x = 0$ 时， $y = 1$ </td></tr><tr><td>(2) 减函数</td><td>(2)增函数</td></tr></table>",
+    "new": "<table><tr><td></td><td>_ $0<a<1$ </td><td> $a > 1$ </td></tr><tr><td>图象</td><td><img src=\"images/page_209_table_image_7_1.jpg\"/></td><td> $y = a^{x}$ <img src=\"images/page_209_table_image_7_2.jpg\"/></td></tr><tr><td>定义域</td><td colspan=2>R</td></tr><tr><td>值域</td><td colspan=2> $(0, +\\infty)$ </td></tr><tr><td rowspan=2>性质</td><td colspan=2>(1)过定点(0，1)，即 $x = 0$ 时， $y = 1$ </td></tr><tr><td>(2) 减函数</td><td>(2)增函数</td></tr></table>"
+   },
+   {
+    "old": "<table><tr><td></td><td>_ $0<a<1$ </td><td>_ $a > 1$ </td></tr><tr><td>图象</td><td><img src=\"images/page_139_table_image_4_1.jpg\"/></td><td><img src=\"images/page_139_table_image_4_2.jpg\"/></td></tr><tr><td>定义域</td><td colspan=2> $(0, +\\infty)$ </td></tr><tr><td>值域</td><td colspan=2>R</td></tr><tr><td rowspan=2>性质</td><td colspan=2>(1) 过定点 $(1,\\ 0)$ ，即时， $x = 1$  $y = 0$ </td></tr><tr><td>(2) 减函数</td><td>(2)增函数</td></tr></table>",
+    "new": "<table><tr><td></td><td>_ $0<a<1$ </td><td>_ $a > 1$ </td></tr><tr><td>图象</td><td><img src=\"images/page_265_table_image_4_1.jpg\"/></td><td><img src=\"images/page_265_table_image_4_2.jpg\"/></td></tr><tr><td>定义域</td><td colspan=2> $(0, +\\infty)$ </td></tr><tr><td>值域</td><td colspan=2>R</td></tr><tr><td rowspan=2>性质</td><td colspan=2>(1) 过定点 $(1,\\ 0)$ ，即时， $x = 1$  $y = 0$ </td></tr><tr><td>(2) 减函数</td><td>(2)增函数</td></tr></table>"
+   }
+  ]
+ }
+}
