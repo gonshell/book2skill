@@ -120,7 +120,7 @@ M1-C3-S2-K04
 ## 5. 锚点（anchors）
 
 ```json
-{"physical_page": 76, "quote": "一般地，设函数 f(x) 的定义域为 I……", "section_path": "第三章/3.2.1/单调性的定义"}
+{"physical_page": 76, "quote": "一般地，设函数 f(x) 的定义域为 I……", "section_path": "第三章/3.2.1/单调性的定义", "role": "definition"}
 ```
 
 | 字段 | 说明 |
@@ -128,6 +128,11 @@ M1-C3-S2-K04
 | `physical_page` | PDF 物理页，用于从 book2md 产物反查（`markdown.md` 的页界标记按它分段） |
 | `quote` | 原文摘录（20–120 字），**唯一可靠的重定位依据** |
 | `section_path` | 章/节/子节路径，便于人眼核对 |
+| `role` | 可选：`definition` 定义段 / `motivation` 动机或追问段 / `warning` 注意事项 / `example` 例题 |
+
+**`role` 为什么必要**：学生问的多是"为什么"（retrieval.md §1 实测十句有八句如此），
+而 `anchors` 如果只收定义句，答"为什么必须说任意"时就只能靠 BM25 撞运气去找动机段。
+一条节点建议收 1–3 条 anchors，其中至少一条 `definition`，能收到 `motivation` 更好。
 
 **不存字符偏移量**。产物重跑后偏移必变，存了就失效；`quote` 在任何一次重跑后
 都能用文本匹配重新定位。这是刻意选择：宁可定位慢一点，不要锚点悄悄失效。
