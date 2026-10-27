@@ -170,11 +170,26 @@ class Issue:                                   # 所有降级的统一载体
 
 ## 8. CLI 面（细规入 spec-cli.md）
 
+**写侧（build）**：
+
 ```
 b2q build --book <册名> --stage {structure|extract|candidates|graph} [--workspace P] [--force]
 b2q config {get|set} <key> [value]
 b2q --version
 ```
+
+**读侧（skill 运行时，见 [skill-io.md](skill-io.md)）**：
+
+```
+b2q recall  --book <册名> --query "<学生原话>" [--top 3]   # 定位 + 取料，返回候选与原文段落
+b2q node    <节点 id>                                      # 单节点全料
+b2q section --book <册名> --sec <3.2>                      # 该节节点顺序 + 前置
+b2q due     --book <册名> [--limit 5]                      # 复习到期清单
+b2q log     --event <ask|attempt|learn_progress|review_done> --node <id> [...]
+```
+
+读侧命令是 **skill 唯一的数据入口**：模型不读 `markdown.md`、不算页码、不判归属。
+`recall` 在内存里现建索引（75 节点 + 约千段段落，毫秒级），不依赖 `index/` 落盘缓存。
 
 | 退出码 | 语义 |
 |---|---|
@@ -210,7 +225,9 @@ graph-spec §3 把 `pages` 列为**必填**，但 `page_map.md` 缺行时算不�
 ### 9.3 `data/index/` 是否 v1 就建
 
 design.md 的数据流画了 `index/`，但检索是 `ask` 阶段（S2）才需要。
-**建议 v1 不建**：build 只管出图谱，检索索引在 S2 单独建，避免 build 里塞 BM25 把首次交付拖重。
+**v1 不落盘**：`recall` 在内存里对 75 个节点 + 约千段段落现建 BM25（毫秒级），
+`index/` 只在"启动耗时成为问题"时才作为缓存落盘。这样 build 不必背检索的复杂度，
+而读侧命令已经能用（见 skill-io.md）。
 
 ## 10. 明确不做的事
 

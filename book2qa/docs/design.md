@@ -1,8 +1,10 @@
 # design.md — book2qa 模块设计
 
 > 模块定位、能力边界、五个 skill 的职责划分与数据流。
-> 配套契约见 [graph-spec.md](graph-spec.md)（骨架已冻结）；**实现架构见 [arch.md](arch.md)**；
-> **数据形态与 skill 消费链路见 [pipeline.md](pipeline.md)**；质量判定见 [quality.md](quality.md)（待写）。
+> 配套：契约 [graph-spec.md](graph-spec.md)（骨架已冻结）· 代码分层 [arch.md](arch.md) ·
+> 数据形态 [pipeline.md](pipeline.md) · **转换过程 [transform.md](transform.md)** ·
+> **skill 运行时 [skill-io.md](skill-io.md)** · 检索与意图 [retrieval.md](retrieval.md) ·
+> 质量判定 [quality.md](quality.md)（待写）。
 > 2026-10-27 起草，同日按用户裁定补：粒度三层判据、§10 标题四分类、`exercises` 题目层、骨架冻结口径。
 > 试点册：人教A版数学必修第一册。
 
