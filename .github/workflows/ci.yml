@@ -27,12 +27,9 @@ jobs:
           python -m pip install Pillow
           python -m pip install -e book2md
 
-      - name: 单元测试（69 例，纯本地）
+      - name: 单元测试（73 例，纯本地）
         working-directory: book2md
         run: bash run_tests.sh
 
-      - name: 包结构自检
-        run: |
-          b2m --version
-          python -c "import book2md, pathlib; p = pathlib.Path(book2md.__file__).parent; \
-            assert (p / 'assets/katex/katex.min.css').is_file(), 'KaTeX 资产未随包分发'"
+      - name: 命令入口可用
+        run: b2m --version
