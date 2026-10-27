@@ -1,0 +1,26 @@
+# 各模块共享的忽略规则（模块内另有自己的 .gitignore）
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# 运行态产物（永不入库）
+out/
+blocks/
+baselines/
+baselines-local/
+ledger.json
+*.pdf
+
+# 本地测试素材：含教材原文，不入库（见 book2md/tests/fixtures/README.md）
+book2md/tests/fixtures/blocks/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
