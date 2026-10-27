@@ -8,6 +8,7 @@ import os
 import sys
 import time
 
+from book2md import __version__
 from book2md.exit_codes import (EXIT_OK, EXIT_USAGE)
 from book2md.commands import _envelope
 
@@ -36,6 +37,8 @@ def _resolve_workspace(args):
 
 def build_parser():
     p = argparse.ArgumentParser(prog="b2m", description="教材 PDF → md+图片+公式 → 双版本单体 HTML 转换工具")
+    p.add_argument("--version", action="version",
+                   version="b2m (book2md) %s" % __version__)
     p.add_argument("--workspace", help="工作区目录（覆盖四层解析）")
     sub = p.add_subparsers(dest="cmd", required=True)
 

@@ -83,6 +83,12 @@ def main():
     add("b2m_import", rc == 0, out[0] if out else "",
         hint="pip install book2md（见 docs/install.md）" if rc != 0 else None)
     b2m_exe = shutil.which("b2m") or shutil.which("b2m.exe")
+    if not b2m_exe:
+        # 兜底：venv 里 pip install -e 生成的入口与解释器同目录，但该目录可能不在 PATH
+        cand = os.path.join(os.path.dirname(sys.executable), "b2m.exe")
+        if not os.path.exists(cand):
+            cand = os.path.join(os.path.dirname(sys.executable), "b2m")
+        b2m_exe = cand if os.path.exists(cand) else None
     # 入口缺失不致命：import 成功时 python -m book2md.cli 等价可用
     add("b2m_entry", b2m_exe is not None, b2m_exe or "未找到（可用 python -m book2md.cli 等价调用）",
         hint="pip install book2md 后 b2m 入口进 PATH" if not b2m_exe else None, fatal=False)
