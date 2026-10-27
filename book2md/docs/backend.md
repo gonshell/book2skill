@@ -41,7 +41,7 @@
 |---|---|---|---|
 | 网关封装版本 | wrapper 版本号 | ✅ **已核实（2026-10-26 远程）**：FastAPI "MinerU API"，API 版本 1.0.0，OpenAPI 3.1.0，19 端点，匿名访问；端点面快照见 `docs/gateway-openapi-20261026.json` | `/openapi.json` |
 | 底层 MinerU 版本 | `mineru` 包版本 | ✅ **已核实（2026-10-26 远程）**：**4.0.12**（`/v1/health` `version` 字段；`/v1/tiers`、`/v1/models` 三处一致；无 `/version` 端点，版本在 `/v1/health`） | `/v1/health` |
-| 模型权重 | basic 档 torch 8 权重，官方仓 `OpenDataLab/MinerU-4_models_torch`（854 MB） | ✅ **已核实：8/8 sha256**（ModelScope API 2026-10-26）；明细见工作区《MinerU自托管实操手册》§3.2 | ModelScope API |
+| 模型权重 | basic 档 torch 8 权重，官方仓 `OpenDataLab/MinerU-4_models_torch`（854 MB） | ✅ **已核实：8/8 sha256**（ModelScope API 2026-10-26）；明细见 [mineru-selfhost.md](mineru-selfhost.md) §3.2 | ModelScope API |
 | 模型落地路径 | 容器内 `/root/.mineru/models/MinerU-4_models_torch/{Layout,MFR,OCR,Table}/`（镜像层，宿主不可见；`~/.cache/modelscope` 为空壳） | ✅ **已核实（2026-10-26）** | `docker exec find` |
 | 服务端补丁 | `mineru/model/ocr/image.py` 裁剪维度补丁（`img_crop_width/height → int(max(1.0, round(...)))`），源见工作区 `patch3/4/5_mineru_image.py`（AST 幂等、同版本重装后重新应用） | ⚠️ 已知存在，哈希待登记 | patch_id: `img-crop-min1` |
 | GPU 规格 | 型号 / 显存 / 驱动 | ✅ **已核实（2026-10-26 `nvidia-smi`）**：2 × NVIDIA TITAN X (Pascal)，各 12 GB，驱动 535.309.01，CC 6.1；**basic 档实测仅占 ≈784 MiB 单卡**（原文"6–8 GB / 算力 ≥7.0"经验值过于保守，作废） | §1.2 手册 |

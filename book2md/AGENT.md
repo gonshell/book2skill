@@ -37,7 +37,7 @@
 |---|---|---|---|
 | 系统级 run 通测（五册真实数据走 `tbp run` 端到端） | ✅ 2026-10-26 完成 | 纯本地实测：五册六门全绿，markdown/images/双版 HTML 与 final 逐字节 SAME，质检报告数值一致，TOC 逐节一致；缺口 page_map.md 已补（13986c1）。临时产物已按用户裁定全删 | 阶段 A 至此全部完成 |
 | 联调（WorkBuddy 技能壳端到端演练） | ✅ 2026-10-26 完成 | 全新工作区 `tbp-ws-c` 化学书整册：convert（抽取 4 块 368 图 + run 七门）→ 壳三脚本 → 覆盖层登记全通；产物与此前 onboard+run 路径逐字节相同。修复壳侧 4 处断点 + 打通 issues 的 C 档闭环；详见台账 D1 |
-| 网关实抽联测（extract 真实抽取） | ✅ 2026-10-26 完成 | 试验册 p51-57 真实网关抽取，对历史基线相似度 98.75%，zip 契约完好；详见工作区 待确定事项台账.md B1 |
+| 网关实抽联测（extract 真实抽取） | ✅ 2026-10-26 完成 | 试验册 p51-57 真实网关抽取，对历史基线相似度 98.75%，zip 契约完好；详见 [docs/qa-ledger.md](docs/qa-ledger.md) B1 |
 | 基准回归实测（`tbp baseline run` 重抽比对） | ✅ 2026-10-26 完成（试验切片 + 整册） | 试验切片：init→run→RC40 三态正确；同版本重抽图片指标有噪声（18↔21）、字符稳定。**整册（化学书 139 页）：4 块重抽全部 `status 一致`**，并修掉两个测量口径缺陷——`_measure` 不带图导致 D10 全量假悬空、run 侧未过 S 规则导致假漂移（详见台账 B5）。指纹仍全 null（网关无 `/version`） |
 | 化学书实战（第一本化学教材端到端） | ✅ 2026-10-26 完成 | onboard 网关实抽 139 页 → run 七门全绿，产物齐全（双版 HTML 各 11.5 MB / 315 图 / TOC 268 条）。暴露并修复 3 缺口：merge 表格 `src=` 二次偏移漏改、S16 结构性损坏公式降级通道、md2html 转义白名单放行 sup/sub/u；详见台账 B4 |
 | D2 五步交付流程复验（tbp-ws-c） | ✅ 2026-10-27 完成 | precheck（exit 0，探活 200 version=4.0.12）→ verify_delivery（exit 0，gaps=[]，双版 HTML selfcontain 外部引用 0，315 图，issues A0/B0/C2）→ adjudicate_sheet（exit 0，复核表 2 items）→ overlay_scaffold（骨架在案，昨日登记 1 条不重复追加）→ convert（D1 已逐字节验证 convert ≡ onboard+run，不重跑）。指纹欠账已清：collect_fingerprint 实测填 4.0.12（来源 /v1/health），化学书基线已按新口径重建 |
@@ -52,9 +52,15 @@
 开工前 AI 应拿到或生成以下输入；**缺项先问用户，不得自行假设**。
 
 ### 1.1 图纸（设计与规格）
-- `../教材转换工具化方案.md`（工作区，仓库外）——架构、交付形态、workspace/路径契约、
+- `docs/design.md`（原工作区《教材转换工具化方案》，2026-10-27 归档入库）——架构、交付形态、workspace/路径契约、
   Canonical Extraction 契约（§4.4）、MinerU 后端契约（§4.3）
-- `docs/spec-cli.md` 命令集接口规格——【待起草，是第一步产出；用户审定后冻结为本清单的确定项】
+- `docs/spec-cli.md` 命令集接口规格——已按 v0.2 实现并随 v0.2.0 实测；
+  【状态：待用户审定后冻结，冻结前修改须升版本号并经用户确认】
+- `deploy/mineru-gateway/`（原工作区根，2026-10-27 归档入库）——网关镜像
+  `Dockerfile.pascal` + 补丁三代 `patch3/4/5_mineru_image.py` + 七变体测试
+  `test_patch5.py`；配套部署手册 `docs/mineru-selfhost.md`
+- `docs/qa-ledger.md`（原工作区《待确定事项台账》）——A/B/C/D 销项记录、
+  E 人工复核队列、F 归档记录；交付前必读
 
 ### 1.2 原材料（搬迁源码，均在 `../gzsx-md/`，只读原件）
 - `fix_md.py`（1478 行，S1–S20 规则本体）、`md2html.py`、`scan3.py`、`scan_render.py`、
