@@ -73,6 +73,32 @@ def _select_segments(segs, pages):
     return picked
 
 
+def _pick_segments(segs, pages_cfg, blocks_cfg, ledger_blocks):
+    """init 抽样选段（spec §6.10）：三级优先。
+
+    ① pages_cfg：科目配置 baseline.pages 显式页列表（页 → 覆盖块切片）；
+    ② blocks_cfg=="all"：按账本抽取块全覆盖（每块整段入样）——不再需要手填页码，
+       整册化学书实测默认首中尾抽样会漏掉表内图最密集的块（87-126）；
+    ③ 默认：首/中/尾各 2 物理页。
+    返回 [(seg, pages_sampled)]。
+    """
+    if pages_cfg:
+        return [(seg, sorted(p for p in pages_cfg if seg["s"] <= p <= seg["e"]))
+                for seg in _select_segments(segs, pages_cfg)]
+    if blocks_cfg == "all":
+        keys = {str(k) for k in (ledger_blocks or {})}
+        picked = [(seg, [seg["s"], seg["e"]]) for seg in sorted(segs, key=lambda x: x["s"])
+                  if "%d-%d" % (seg["s"], seg["e"]) in keys]
+        if picked:
+            return picked
+        # 账本无该册（如 out/ 产物先于本工作区账本）→ 退化按页界标记自身分块
+        return [(seg, [seg["s"], seg["e"]]) for seg in segs]
+    lo, hi = segs[0]["s"], segs[-1]["e"]
+    return [(seg, sorted(p for p in _default_sample_pages(lo, hi)
+                         if seg["s"] <= p <= seg["e"]))
+            for seg in _select_segments(segs, _default_sample_pages(lo, hi))]
+
+
 def _measure(book, text, tmp_root, img_src=None):
     """单块指标：字符数 + D1–D10 + KaTeX 错误/缺图。落盘临时目录跑探测器与渲染。
 
@@ -146,20 +172,23 @@ def _cmd_init(args, t0):
                            "message": "out/ 下无可入库的书（先 run/convert 产出 out/<book>/markdown.md）"},
                     t0=t0)
 
-    # 科目配置的 baseline.pages 覆盖（spec §6.10 init 规则）
-    pages_cfg = None
+    # 科目配置的 baseline 覆盖（spec §6.10 init 规则）：
+    # pages = 显式页列表；blocks = "all" 按账本抽取块全覆盖；都缺省走首中尾抽样
+    pages_cfg, blocks_cfg = None, None
     from textbook_pipe.commands import onboard as onboard_mod
     cfg_path = onboard_mod._subject_config_path(args.subject)
     if os.path.exists(cfg_path):
         cfg = json.load(open(cfg_path, encoding="utf-8"))
-        pages_cfg = (cfg.get("baseline") or {}).get("pages")
-
-    base_dir = os.path.join(workspace, "baselines", args.subject)
-    entries, ledger_pdf = {}, None
+        b = cfg.get("baseline") or {}
+        pages_cfg = b.get("pages")
+        blocks_cfg = b.get("blocks")
+    ledger_blocks = {}
     ledger_path = os.path.join(workspace, "ledger.json")
     if os.path.exists(ledger_path):
         led = json.load(open(ledger_path, encoding="utf-8"))
 
+    base_dir = os.path.join(workspace, "baselines", args.subject)
+    entries, ledger_pdf = {}, None
     for book in books:
         md = open(os.path.join(out_root, book, "markdown.md"),
                   encoding="utf-8").read()
@@ -170,19 +199,20 @@ def _cmd_init(args, t0):
                                "message": "%s 的 markdown.md 无页界标记（非 merge_all 产物，拒绝入库）"
                                           % book}, t0=t0)
         lo, hi = segs[0]["s"], segs[-1]["e"]
-        pages = pages_cfg or _default_sample_pages(lo, hi)
-        picked = _select_segments(segs, pages)
+        ledger_blocks = (led.get("books", {}).get(book, {}).get("blocks")
+                         if os.path.exists(ledger_path) else None)
+        picked = _pick_segments(segs, pages_cfg, blocks_cfg, ledger_blocks)
         if not picked:
             return emit("baseline", EXIT_CONTRACT,
                         error={"code": "NO_COVER",
                                "message": "抽样页 %s 无覆盖块（%s 覆盖范围 %d-%d）"
-                                          % (pages, book, lo, hi)}, t0=t0)
+                                          % (pages_cfg or "默认首中尾", book, lo, hi)}, t0=t0)
 
         book_dir = os.path.join(base_dir, book)
         os.makedirs(os.path.join(book_dir, "images"), exist_ok=True)
         items = []
         img_src = os.path.join(out_root, book, "images")
-        for seg in picked:
+        for seg, sampled in picked:
             with tempfile.TemporaryDirectory(prefix="tbp-base-") as tmp:
                 m = _measure(book, seg["text"], tmp, img_src=img_src)
             seg_name = "seg_%d-%d.md" % (seg["s"], seg["e"])
@@ -194,8 +224,7 @@ def _cmd_init(args, t0):
                 if os.path.exists(f):
                     shutil.copy2(f, os.path.join(book_dir, "images", img))
             items.append({"block": "%d-%d" % (seg["s"], seg["e"]),
-                          "pages_sampled": sorted(
-                              p for p in pages if seg["s"] <= p <= seg["e"]),
+                          "pages_sampled": sampled,
                           **m})
         entries[book] = items
         if ledger_pdf is None and os.path.exists(ledger_path):

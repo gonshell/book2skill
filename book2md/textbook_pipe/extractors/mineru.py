@@ -19,6 +19,7 @@ import sys
 import time
 import zipfile
 
+from textbook_pipe.commands._endpoints import resolve_api
 from textbook_pipe.extractors import merge
 
 # 默认数据（人教A版数学 5 册：书名 → PDF 文件名；科目配置化后由配置注入）
@@ -117,20 +118,47 @@ def process_block(name, s, e, pdf_path, blocks_dir, out_dir, api, tier="basic"):
     return "done", f"pages {s}-{e}, images {n_imgs}, 教材页 {pages}"
 
 
-def collect_fingerprint():
+def _http_get_json(url, timeout=5):
+    """GET 并解析 JSON（探活/版本探测专用；失败返回 None，不抛出）。"""
+    try:
+        r = subprocess.run(["curl", "-sS", "-m", str(timeout), url],
+                           capture_output=True, text=True, timeout=timeout + 2)
+        return json.loads(r.stdout)
+    except Exception:
+        return None
+
+
+def collect_fingerprint(api=None):
     """网关版本指纹（docs/backend.md §3）。
 
-    网关未上报的字段一律 None——缺口显式可见，禁止占位假值；
-    补实途径见 backend.md「核实尝试记录」。
+    官方 mineru-kit 无 /version，版本号在 GET /v1/health 的 version 字段
+    （2026-10-26 远程实测：{"status":"ok","version":"4.0.12",...}；该版本即
+    MinerU 版本，与 /v1/tiers、/v1/models 三处一致——手册 §2.4）。
+    纪律不变：探活失败/未配置端点时字段一律 None——缺口显式可见，禁止占位假值。
     """
-    return {
+    fp = {
         "gateway_version": None,
         "mineru_version": None,
         "model_hashes": {},
         "patched_files": [{"path": "mineru/model/ocr/image.py",
                            "patch_id": "img-crop-min1", "present": None}],
-        "note": "待网关核实（docs/backend.md §3，2026-10-24 探测：网关不可达）",
+        "note": None,
     }
+    api = api or resolve_api()
+    if not api:
+        fp["note"] = "网关端点未配置（TBP_BACKEND_API 或 tbp config set backend_endpoint）"
+        return fp
+    health = _http_get_json(api.rstrip("/") + "/v1/health")
+    ver = (health or {}).get("version")
+    if ver:
+        ver = str(ver)
+        # mineru-kit api-server 与 MinerU 同版本发布（手册 B3 实测三处一致），同源填充
+        fp["gateway_version"] = ver
+        fp["mineru_version"] = ver
+        fp["note"] = "来源 GET /v1/health（官方 mineru-kit 无 /version，手册 §2.4）"
+    else:
+        fp["note"] = "探活失败或响应无 version 字段（%s/v1/health）" % api
+    return fp
 
 
 def extract_pdf(pdf_path, book, workspace, api, tier="basic", start_page=DEFAULT_START_PAGE,

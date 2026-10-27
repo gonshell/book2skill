@@ -31,6 +31,7 @@ run test_extract_onboard_smoke
 run test_run_smoke
 run test_s16_and_inline_tags
 run test_baseline_smoke
+run test_fingerprint_and_sampling
 run test_skill_scripts
 
 # 第二梯队：行为保持对账（需 TBP_PARITY_SOURCE 指向五册历史产物目录，缺省跳过）
