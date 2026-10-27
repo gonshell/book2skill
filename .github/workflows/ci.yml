@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          # Pillow 仅供测试生成样例图片（run_tests.sh 环境自检会 import PIL）
+          python -m pip install Pillow
+          python -m pip install -e book2md
+
+      - name: 单元测试（69 例，纯本地）
+        working-directory: book2md
+        run: bash run_tests.sh
+
+      - name: 包结构自检
+        run: |
+          b2m --version
+          python -c "import book2md, pathlib; p = pathlib.Path(book2md.__file__).parent; \
+            assert (p / 'assets/katex/katex.min.css').is_file(), 'KaTeX 资产未随包分发'"

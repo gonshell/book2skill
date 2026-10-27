@@ -37,6 +37,14 @@ def _fixture_zip():
     return os.path.join(FIXTURES, "blocks", BOOK, ZIP_NAME)
 
 
+# 样例含教材原文，不入库（.gitignore 排除 tests/fixtures/blocks/）。
+# 缺失时整批跳过而非报错——金样本的观测值（sha256 / 84 图 / 28 页 / page_idx
+# 86-113 / 页码 "82-None"）与具体教材内容绑定，无法用合成数据替代。
+_MISSING = ("缺少真实抽取样例（含教材原文，不入库）：%s\n"
+            "自备方式见 tests/fixtures/README.md" % _fixture_zip())
+
+
+@unittest.skipUnless(os.path.exists(_fixture_zip()), _MISSING)
 class ZipLayoutContract(unittest.TestCase):
     """① zip 布局契约（适配器消费前提，spec §4.4 Canonical Extraction）。"""
 
@@ -81,6 +89,7 @@ class ZipLayoutContract(unittest.TestCase):
             self.assertRegex(n, pat, n)
 
 
+@unittest.skipUnless(os.path.exists(_fixture_zip()), _MISSING)
 class MergeGoldenMaster(unittest.TestCase):
     """② merge_one 真实链路金样本（金样本回归）。"""
 
