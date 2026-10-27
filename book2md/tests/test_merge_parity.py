@@ -10,20 +10,20 @@ extractors/merge.py 以 gzsx-md/blocks/ 的历史 zip 按页序重合并，补 p
     行尾差异属写盘模式，非内容差异；
   - images/ 文件清单比对。
 
-前置：环境变量 TBP_PARITY_SOURCE 指向 gzsx-md 原目录（只读）；未设置时整批 skip。
+前置：环境变量 B2M_PARITY_SOURCE 指向 gzsx-md 原目录（只读）；未设置时整批 skip。
 """
 import os
 import tempfile
 import unittest
 
-from textbook_pipe.extractors import merge
-from textbook_pipe.engine import reporting
+from book2md.extractors import merge
+from book2md.engine import reporting
 try:                                       # python tests/x.py（run_tests.sh 口径）
     from parity_util import unexpected_delta
 except ImportError:                        # python -m unittest tests.x
     from tests.parity_util import unexpected_delta
 
-SRC = os.environ.get("TBP_PARITY_SOURCE")
+SRC = os.environ.get("B2M_PARITY_SOURCE")
 BOOKS = ["选择性必修第三册", "选择性必修第二册", "选择性必修第一册", "必修第二册", "必修第一册"]
 
 
@@ -31,7 +31,7 @@ def _norm(data):
     return data.replace(b"\r\n", b"\n")
 
 
-@unittest.skipUnless(SRC, "未设置 TBP_PARITY_SOURCE（指向 gzsx-md 原目录），跳过合并对账")
+@unittest.skipUnless(SRC, "未设置 B2M_PARITY_SOURCE（指向 gzsx-md 原目录），跳过合并对账")
 class MergeParityTest(unittest.TestCase):
 
     def test_merge_parity(self):
@@ -39,7 +39,7 @@ class MergeParityTest(unittest.TestCase):
         ledger = os.path.join(SRC, "ledger.json")
         for book in BOOKS:
             with self.subTest(book=book):
-                with tempfile.TemporaryDirectory(prefix="tbp_merge_") as tmp:
+                with tempfile.TemporaryDirectory(prefix="b2m_merge_") as tmp:
                     merge.merge_all(blocks_root=blocks_root, out_root=tmp,
                                     ledger_path=ledger, books=[book])
                     p = os.path.join(tmp, book, "markdown.md")

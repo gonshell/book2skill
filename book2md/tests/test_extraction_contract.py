@@ -30,7 +30,7 @@ OBS = {
 }
 
 sys.path.insert(0, os.path.dirname(FIXTURES))
-from textbook_pipe.extractors import merge  # noqa: E402
+from book2md.extractors import merge  # noqa: E402
 
 
 def _fixture_zip():
@@ -86,7 +86,7 @@ class MergeGoldenMaster(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.mkdtemp(prefix="tbp-contract-")
+        cls.tmp = tempfile.mkdtemp(prefix="b2m-contract-")
         blocks_root = os.path.join(cls.tmp, "blocks")
         book_dir = os.path.join(blocks_root, BOOK)
         os.makedirs(book_dir)

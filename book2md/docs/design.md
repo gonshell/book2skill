@@ -124,7 +124,7 @@
 ### 4.0 核心原则：先有可移植核心，再有入口
 
 **真正值钱的是 2863 行引擎，不是某个平台的"技能"。** 因此产品化的第一约束是：
-核心包（`textbook-pipe`，纯 Python + Node/KaTeX）必须**零平台绑定**，可 `pip install` 后在
+核心包（`book2md`，纯 Python + Node/KaTeX）必须**零平台绑定**，可 `pip install` 后在
 任何环境（CI、其他 IDE、其他 Agent 框架、裸服务器）独立运行。WorkBuddy 技能包、CLI、
 未来的 Web UI 都只是**薄适配层**，调用同一个核心，谁都能换。
 
@@ -176,14 +176,14 @@ SKILL.md。规避=逻辑全留核心包，技能壳逻辑零嵌入（结构见 �
 
 ```
 【工厂：产品仓库，装一次，带版本管理】
-textbook-pipe/                        ← 仓库名（C 方案，见 §4.2.6）
-├── textbook-pipe/                           ① 核心包（必选，pip 可装）
+book2md/                        ← 仓库名（C 方案，见 §4.2.6）
+├── book2md/                           ① 核心包（必选，pip 可装）
 │   ├── 引擎：修复/渲染/探测器/质量门流水线（现有 ~3800 行参数化重组）
 │   ├── 资产：katex/ 字体 + render_formulas.js（随包分发）
 │   ├── 内置配置：configs/backends/ + configs/<科目>.json
 │   ├── packs/<学科>/                 ← L1 学科规则包（产品自带，随版本演进）
 │   └── baselines/                    ← 基准样本初始集 + 基线指标（防后端漂移）
-├── skill-textbook-pipe/              ② 技能壳（可选，依赖①；前缀仅仓库内区分用）
+├── skill-book2md/              ② 技能壳（可选，依赖①；前缀仅仓库内区分用）
 │   ├── SKILL.md                      ← ~50 行编排手册（触发条件 + 流程编排）
 │   ├── scripts/                      ← precheck / adjudicate_sheet / overlay_scaffold / verify_delivery
 │   ├── references/                   ← process / ocr-patterns / backend-contract / troubleshoot
@@ -222,13 +222,13 @@ skill 目录理论上可以装下一切（引擎、资产全塞 `scripts/` 也�
 #### 4.2.3 技能壳的完整设计：结构、调用机制、纪律边界
 
 **调用机制（三层接力）**——skill 本身不执行任何东西，它是一份说明书，让助手用现成的
-Shell 工具调 textbook-pipe 命令：
+Shell 工具调 book2md 命令：
 
 ```
 你说"转化学必修一"
   → ① WorkBuddy 加载 SKILL.md（纯文本注入上下文）
-  → ② 助手按手册用 Bash/PowerShell 工具执行：tbp run --subject chem-renjiao --book 化学必修第一册
-  → ③ textbook-pipe 进程干活，结果写入工作区文件
+  → ② 助手按手册用 Bash/PowerShell 工具执行：b2m run --subject chem-renjiao --book 化学必修第一册
+  → ③ book2md 进程干活，结果写入工作区文件
   → ④ 助手读结果 → 汇报 → present_files 呈交交付物
 ```
 
@@ -236,16 +236,16 @@ Shell 工具调 textbook-pipe 命令：
 
 | 内容 | 去处 | 理由 |
 |---|---|---|
-| 转换/修复/渲染逻辑 | textbook-pipe 核心（永远） | 平台无关、可测试、可版本化 |
+| 转换/修复/渲染逻辑 | book2md 核心（永远） | 平台无关、可测试、可版本化 |
 | 编排 glue、环境预检、报告核验 | skill `scripts/` | 确定性多步操作封装成脚本，防助手临场发挥漏步 |
 | 方法论知识、处置手册 | skill `references/` | 按需加载：触发时只载 SKILL.md，质量门失败才读 troubleshoot.md，节省上下文 |
 | **严禁** | 把修复正则、转换逻辑写进 SKILL.md 或 skill 脚本 | 逻辑嵌入 = 平台绑死 |
 
-**分工实例**：跑修复、渲染、质量门由 textbook-pipe 做（确定性代码，快且稳）；
+**分工实例**：跑修复、渲染、质量门由 book2md 做（确定性代码，快且稳）；
 C 档存疑内容复核由对话助手做（联网查教材官网、目检 PDF、多源交叉验证、与用户确认——
 这恰是对话式 AI 的强项）。CLI 干粗活，对话干判断。
 
-**为什么暂不做 MCP**：textbook-pipe 是单机工具、命令即接口，Shell 调用最简单可靠。
+**为什么暂不做 MCP**：book2md 是单机工具、命令即接口，Shell 调用最简单可靠。
 将来若要让团队多客户端共享转换服务，再包一层 MCP server，核心零改动。
 
 #### 4.2.4 工作区与路径配置（分层解析，单一事实源）
@@ -253,16 +253,16 @@ C 档存疑内容复核由对话助手做（联网查教材官网、目检 PDF�
 **引入 workspace 概念**：`out/` 的位置不是孤立配置，而是工作区的一部分
 （含产物、overlays、blocks 缓存、账本，见 4.2.1 车间树）。
 
-textbook-pipe 解析工作区路径按固定优先级（高 → 低）：
+book2md 解析工作区路径按固定优先级（高 → 低）：
 
 | 优先级 | 来源 | 用途 |
 |---|---|---|
 | 1 | 命令行参数 `--workspace D:/教材工作区` | 单次运行临时指定 |
-| 2 | 环境变量 `TBP_WORKSPACE` | CI/定时任务一次设定 |
-| 3 | 用户配置文件 `~/.tbp/config.json` | 个人默认值，写一次永久生效 |
+| 2 | 环境变量 `B2M_WORKSPACE` | CI/定时任务一次设定 |
+| 3 | 用户配置文件 `~/.book2md/config.json` | 个人默认值，写一次永久生效 |
 | 4 | 默认值 `./out`（当前目录） | 零配置开箱即用 |
 
-`~/.tbp/config.json` 示例：
+`~/.book2md/config.json` 示例：
 
 ```json
 {
@@ -272,7 +272,7 @@ textbook-pipe 解析工作区路径按固定优先级（高 → 低）：
 }
 ```
 
-**skill 不需要自己的路径配置（单一事实源原则）**：textbook-pipe 每个命令的 stdout 输出
+**skill 不需要自己的路径配置（单一事实源原则）**：book2md 每个命令的 stdout 输出
 机器可读 JSON，携带全部已解析路径：
 
 ```json
@@ -285,8 +285,8 @@ textbook-pipe 解析工作区路径按固定优先级（高 → 低）：
 }
 ```
 
-skill 脚本只解析该 JSON、只转调 textbook-pipe——路径在 textbook-pipe 解析一次，CLI 与 skill 全部自动跟随，
-换机器只改 `~/.tbp/config.json` 一处。
+skill 脚本只解析该 JSON、只转调 book2md——路径在 book2md 解析一次，CLI 与 skill 全部自动跟随，
+换机器只改 `~/.book2md/config.json` 一处。
 
 **Windows 实现约束**：工作区路径含中文是常态，配置层统一 UTF-8 + `pathlib.Path`
 处理（本项目教训：中文文件名曾在 `ls` 与批处理中乱码）。
@@ -320,8 +320,8 @@ out/化学必修第一册/
 
 | 名称 | 含义与说明 | 状态 |
 |---|---|---|
-| `textbook-pipe`（包）/ `tbp`（命令） | **C 方案（已定，2026-10-24）**：语义直白，"pipe"准确覆盖抽取→修复→渲染→质检全链路（"convert"仅指格式转换，偏窄）；命令短；**过渡期保留 `tbpipe` 作为命令别名**，兜底肌肉记忆 |
-| `skill-textbook-pipe` | `skill-` 前缀仅仓库内区分"技能壳 vs 核心包"；安装到 WorkBuddy 后目录名为 SKILL.md 声明的 `textbook-pipe` | 已定 |
+| `book2md`（包）/ `b2m`（命令） | **C 方案（已定，2026-10-24）**：语义直白，"pipe"准确覆盖抽取→修复→渲染→质检全链路（"convert"仅指格式转换，偏窄）；命令短；**过渡期保留 `b2m` 作为命令别名**，兜底肌肉记忆 |
+| `skill-book2md` | `skill-` 前缀仅仓库内区分"技能壳 vs 核心包"；安装到 WorkBuddy 后目录名为 SKILL.md 声明的 `book2md` | 已定 |
 | `baselines/` | 基准样本集（golden master 惯用名 golden 已按术语纪律弃用，与 §4.3.3"基准回归"对齐） | 已定 |
 | `out/`、`workspace` | 产物堆放区与用户数据区，见 4.2.1 两棵树与 4.2.4 分层配置 | 已定 |
 
@@ -331,7 +331,7 @@ out/化学必修第一册/
 #### 4.2.7 实施节奏
 
 - **P1 — 核心包（pip 可装，CLI 可用）**：§2 的 L0 引擎 + 配置化规则抽成标准 Python 包，
-  提供 `tbp onboard/convert/run/scan` 命令行与 JSON 输出契约。这是**真正的产品**。
+  提供 `b2m onboard/convert/run/scan` 命令行与 JSON 输出契约。这是**真正的产品**。
   投入 **3–5 天**（含逐册回归；原估 1–2 天系基于漏盘前 3200 行假设，按 §1.1 补齐
   postprocess / run_blocks / rematch_merge 等资产后修正）。
 - **P2 — WorkBuddy 技能壳（可选）**：按 §4.2.3 结构落地（1 手册 + 4 脚本 + 4 参考文档 + 1 模板），
@@ -448,7 +448,7 @@ engine/extract.py            # PdfExtractor 抽象接口（核心只认这个）
 **(b) `tier` 必须锁定**
 `run_blocks.py` 用的是 `tier=basic`。**OCR 质量档位直接决定下游规则的适用前提**——
 `tier` 一变，我们调出来的 `\mathcal` 误识模式、`overline` 括号模式可能整体失效。
-契约要求：textbook-pipe 调用时显式传 `tier`，且 ledger 记录实际生效的 `tier`。
+契约要求：book2md 调用时显式传 `tier`，且 ledger 记录实际生效的 `tier`。
 
 **(c) GPU 能力规格（自托管 box 必须满足，供运维核对）**
 MinerU 推理栈对 GPU 有硬性要求（数值为经验下限，非官方精确值）：
@@ -461,7 +461,7 @@ MinerU 推理栈对 GPU 有硬性要求（数值为经验下限，非官方精�
 
 **(d) 形式化载体：后端契约文件 + ledger 结构扩展**
 - 新增 `configs/backends/mineru-remote.json`，记录上述全部锁定值 + 网关地址 +
-  健康探测方式（`/health` 或 TCP 探活）。textbook-pipe 启动时校验"实际版本指纹 ∈ 契约允许集合"，
+  健康探测方式（`/health` 或 TCP 探活）。book2md 启动时校验"实际版本指纹 ∈ 契约允许集合"，
   不符即告警（而非静默接受）。
 - `ledger.json` 增 `backend` 字段：`{kind, gateway_version, mineru_version, model_hashes, tier, gpu_spec, ts}`，
   落实 §4.3.3 的版本指纹写入要求。
@@ -476,7 +476,7 @@ MinerU 推理栈对 GPU 有硬性要求（数值为经验下限，非官方精�
 - **版本指纹必须含补丁状态**：`backend.patched_files: [{path, patch_id, hash}]`。
   否则 pip 重装/升级 mineru 会**静默冲掉补丁**——图片裁剪行为改变而无人察觉，
   这正是"同一版本 ≠ 同一后端"的实例：版本 + 补丁状态合起来才算同一版本指纹。
-- 补丁脚本产品化：纳入网关运维手册与契约测试（textbook-pipe 启动/抽取前校验补丁在场，
+- 补丁脚本产品化：纳入网关运维手册与契约测试（book2md 启动/抽取前校验补丁在场，
   缺失即告警）。
 
 ---
@@ -518,7 +518,7 @@ MD+图片+middle_json"之间，如何提高兼容性？本节给出设计。
 
 ```jsonc
 {
-  "schema": "textbook-pipe.extraction/v1",
+  "schema": "book2md.extraction/v1",
   "source_pdf": "必修第一册.pdf",
   "meta": {                        // 版本指纹（源自 §4.3.3）
     "tool": "mineru-remote",       // 适配器名
@@ -621,7 +621,7 @@ MD+图片+middle_json"之间，如何提高兼容性？本节给出设计。
 
 | 步骤 | 动作 | 风险 | 回滚 |
 |---|---|---|---|
-| 1 | 核心包骨架 + 配置化（BOOKS/TOC/主题抽到 configs/） | 低（不改规则逻辑） | 删 tbpipe/ 目录即回到现状 |
+| 1 | 核心包骨架 + 配置化（BOOKS/TOC/主题抽到 configs/） | 低（不改规则逻辑） | 删 b2m/ 目录即回到现状 |
 | 2 | 探测器按学科拆分：scan3.py 的 D2/D3/D9 移入 packs/math/，通用部分留 engine | 低（ detectors 已是函数注册表结构） | git 级回滚 |
 | 3 | fix_md.py 拆分：S1–S9/S12–S15 → engine，S10 数学规则 → packs/math，逐册 TARGETED → overlays/ | 中（1478 行搬迁，需逐册回归） | 保留 fix_md.py 原文件，双跑对比字符数 |
 | 4 | 新书接入走 onboard 回路，化学/物理科目配置落地 | 低 | — |
@@ -630,12 +630,12 @@ MD+图片+middle_json"之间，如何提高兼容性？本节给出设计。
 
 ---
 
-## 7. 已落地：textbook-pipe 骨架
+## 7. 已落地：book2md 骨架
 
-见 `gzsx-md/tbpipe/`：
+见 `gzsx-md/b2m/`：
 
 ```
-textbook-pipe/
+book2md/
 ├── __init__.py        # 包声明
 ├── config.py          # 科目配置加载（configs/*.json）
 ├── cli.py             # 命令行入口（subjects/run/scan/onboard）
@@ -679,7 +679,7 @@ textbook-pipe/
 - **方向正确**：把抽取当远程服务，既符合你现行做法，也契合"核心独立 + 适配层可插拔"
   全局纪律。核心永不 import 网关地址，只依赖 `PdfExtractor` 接口。
 - **关键约束**：核心引擎仍保持"md+图 进 → HTML 出"的源无关性（阶段 B 资产可复用于
-  任意来源）；但**产品（textbook-pipe）把抽取作为可插拔后端**——默认 `RemoteMinerUAdapter`
+  任意来源）；但**产品（book2md）把抽取作为可插拔后端**——默认 `RemoteMinerUAdapter`
   （迁 run_blocks.py 逻辑），并提供 `LocalMinerUAdapter` 回退、未来 `PublicApiAdapter` 对外。
 - **三大风险已对策**（可用性 / 版本质量漂移 / 输出契约脆弱），详见 §4.3.3；核心防腐手段 =
   版本指纹 + 基准样本回归 + 契约测试。
@@ -695,8 +695,8 @@ textbook-pipe/
 - 你已确认先在化学 + 物理上验证通用性，再决定是否扩展。
 
 ### Q5 — 核心包命名【已定：C 方案，2026-10-24】
-- **定稿**：包名 `textbook-pipe`（Python 发行名），命令 `tbp`（Python 模块名 `textbook_pipe`），
-  **过渡期保留 `textbook-pipe` 作为命令别名**。
+- **定稿**：包名 `book2md`（Python 发行名），命令 `b2m`（Python 模块名 `book2md`），
+  **过渡期保留 `book2md` 作为命令别名**。
 - 理由："pipe"准确覆盖抽取→修复→渲染→质检全链路（"convert"偏窄）；包名语义直白、
   命令短；别名零成本保住过渡期肌肉记忆。详见 §4.2.6。
-- 后续实施中本文档如仍出现 `textbook-pipe` 字样，仅指：① 命令别名；② `gzsx-md/textbook-pipe/` 现存骨架目录（真实路径）。
+- 后续实施中本文档如仍出现 `book2md` 字样，仅指：① 命令别名；② `gzsx-md/book2md/` 现存骨架目录（真实路径）。

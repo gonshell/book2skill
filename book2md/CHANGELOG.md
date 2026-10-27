@@ -3,17 +3,46 @@
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)；
 版本号遵循语义化版本（SemVer）。验收结论与欠账台账见 [AGENT.md](AGENT.md)。
 
+> **更名沿革（重要）**：本包 0.2.0 及以前名为 **textbook-pipe**，CLI 命令为 `tbp` /
+> `tbpipe`，环境变量前缀 `TBP_`，配置目录 `~/.tbp/`。**v0.3.0 起更名为 book2md**
+> （CLI `b2m`、环境变量 `B2M_`、配置目录 `~/.book2md/`），并迁入 `book2skill/` 平台目录。
+> 下方 0.2.0 / 0.1.0 条目中的命令与路径已按新名书写，仅供阅读；当时实际叫法是旧名。
+
+## [0.3.0] - 2026-10-27
+
+**更名 + 迁入平台目录**（Breaking Change：包名、CLI、环境变量、配置目录全部变更）。
+
+### Changed
+- 包名 `textbook-pipe` → **`book2md`**，Python 包 `textbook_pipe` → `book2md`
+  （66 处 import 同步）
+- CLI 入口 `tbp` / `tbpipe` → **单入口 `b2m`**（旧别名删除，不保留兼容）
+- 环境变量 `TBP_*` → **`B2M_*`**（`BACKEND_API` / `WORKSPACE` / `PARITY_SOURCE` /
+  `PYTHON` / `SOURCE_ROOT` 五个）
+- 用户配置目录 `~/.tbp/config.json` → **`~/.book2md/config.json`**（需重新配置）
+- JSON schema `tbp.*/v1` → `b2m.*/v1`（baseline / issues / overlay / provenance /
+  extraction 五种）
+- 技能壳目录 `skill-textbook-pipe/` → **`skill-book2md/`**
+- 仓库迁入 `../`（工作区根 `textbook-pipe/` → `book2skill/book2md/`）；因层级加深，
+  对账裁判相对路径 `../gzsx-md` → `../../gzsx-md`
+
+### 迁移说明
+- git 历史完整保留（目录移动由 `git mv` 完成，commit/tag 未断）
+- 旧版本 v0.2.0 tag 仍指向更名前最后一个提交
+- 已装旧包需 `pip uninstall textbook-pipe` 后 `pip install -e .`
+
 ## [0.2.0] - 2026-10-27
+
+> 时名 textbook-pipe，CLI 为 `tbp`。
 
 首个全实测锚点版本：五册系统级通测 + 网关实抽/基准回归实测 + 化学书（首本非数学
 教材）端到端 + 技能壳联调。详见 AGENT.md 验收表与 [docs/qa-ledger.md](docs/qa-ledger.md)。
 
 ### Added
-- 系统级 `tbp run` 通测（阶段 A-5）：五册端到端六门全绿，markdown / images /
+- 系统级 `b2m run` 通测（阶段 A-5）：五册端到端六门全绿，markdown / images /
   双版 HTML 与已验收 final 逐字节一致；run 补生 page_map.md（13986c1）
 - 技能壳（P2 / 阶段 C）：`SKILL.md` + 四脚本（precheck / verify_delivery /
   adjudicate_sheet / overlay_scaffold），stdout JSON 信封，退出码 0/10/20/30/40/50；
-  `tbp convert` 与 `onboard+run` 产物逐字节相同（链路确定性实证）
+  `b2m convert` 与 `onboard+run` 产物逐字节相同（链路确定性实证）
 - S16 结构性损坏公式降级通道：嵌套 textcircled / 空 array 无限嵌套等不可还原形态
   → 占位 + `broken_formulas.tsv` 人工补录清单（C 档）
 - baseline 测量口径对等：`_measure` 按实际引用带图（杜绝 D10/缺图假阳性）；
@@ -49,14 +78,14 @@
 ### Added
 - CLI 七命令全部接线（`docs/spec-cli.md` v0.2）：
   `config` / `extract` / `onboard` / `run` / `convert` / `report` / `scan` / `baseline`
-- `tbp run` 质量门编排：deps → fix → html → selfcontain → render → preview →
+- `b2m run` 质量门编排：deps → fix → html → selfcontain → render → preview →
   scan3+toc；staging 原子落盘（失败不晋升，旧版挪 `.prev-<时间戳>`），
   `qa_gate.log` 逐关记录随册
-- `tbp baseline` 基准回归：`init` 从已验收册按页界标记抽样计量入库；
+- `b2m baseline` 基准回归：`init` 从已验收册按页界标记抽样计量入库；
   `run` 走网关重抽同页比对（字符 ±0.5% / 探测器 ±0 / KaTeX ±0 / 版本指纹）
 - 抽取契约真实样例入库（`tests/fixtures/`，MinerU 网关原始 zip + 裁剪账本）
 - `run_tests.sh` 一键回归（契约+冒烟不依赖历史产物；四套行为保持对账需
-  `TBP_PARITY_SOURCE`）
+  `B2M_PARITY_SOURCE`）
 
 ### Changed
 - JSON 信封新增可选顶层 `extra` 合并字段（spec §8 兼容变更，v0.1 → v0.2）
@@ -74,6 +103,8 @@
   - `texmath.py` 空 `print()` 误写 stdout（JSON 信封污染）
 
 ## [0.1.0] - 2026-10-25
+
+> 时名 textbook-pipe，CLI 为 `tbp`。
 
 P1 核心包首个锚点版本：五册行为保持搬迁完成 + 七命令接线 + 验收对账全绿。
 

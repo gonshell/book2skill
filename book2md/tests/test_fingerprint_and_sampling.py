@@ -10,8 +10,8 @@
 import unittest
 from unittest import mock
 
-from textbook_pipe.commands.baseline import _pick_segments
-from textbook_pipe.extractors import mineru
+from book2md.commands.baseline import _pick_segments
+from book2md.extractors import mineru
 
 
 def _segs(*ranges):

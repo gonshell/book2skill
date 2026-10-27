@@ -1,4 +1,4 @@
-# textbook-pipe 命令集接口规格（spec-cli）
+# book2md 命令集接口规格（spec-cli）
 
 > 版本：v0.2 草案 · 2026-10-25 · 状态：**待用户审定，审定后冻结**（AGENT.md §1.1）
 > 本文件是核心包 CLI 与 WorkBuddy 技能壳共同的接口地基。实现以本文件为准；
@@ -10,7 +10,7 @@
 
 ## 1. 范围
 
-定义 `tbp` 命令行工具的全部命令、参数、输出契约、退出码与数据文件 schema。
+定义 `b2m` 命令行工具的全部命令、参数、输出契约、退出码与数据文件 schema。
 设计目标按优先级：
 
 1. **stdout 恒为合法 JSON**——技能壳与 CI 只需解析 stdout，零脆弱文本匹配
@@ -25,8 +25,8 @@
 | 流分离 | **stdout = 单个 JSON 结果对象；stderr = 人类可读进度/日志**。技能壳只解析 stdout，人只看 stderr |
 | 编码 | 全链路 UTF-8；路径一律 `pathlib.Path`（中文工作区路径为常态） |
 | 非交互 | 不提供任何交互提示；需要决策的场景输出到 issues.json 交给调用方（人/技能壳）裁决 |
-| 路径解析 | workspace 按 §4.2.4 四层优先级：`--workspace` > 环境变量 `TBP_WORKSPACE` > `~/.tbp/config.json` > 当前目录 `./out` |
-| 命令别名 | `tbp` 为主名，`tbpipe` 为过渡别名，行为完全一致 |
+| 路径解析 | workspace 按 §4.2.4 四层优先级：`--workspace` > 环境变量 `B2M_WORKSPACE` > `~/.book2md/config.json` > 当前目录 `./out` |
+| 命令别名 | `b2m` 为主名，`b2m` 为过渡别名，行为完全一致 |
 | 确定性 | 除时间戳与指纹外，同输入同输出；规则引擎无随机性 |
 
 ## 3. 退出码
@@ -87,22 +87,22 @@
 
 ## 6. 命令详规
 
-### 6.1 `tbp config` — 用户配置管理
+### 6.1 `b2m config` — 用户配置管理
 
-**用途**：查看/设置 `~/.tbp/config.json`（§4.2.4 第 3 优先级的个人默认值）。
+**用途**：查看/设置 `~/.book2md/config.json`（§4.2.4 第 3 优先级的个人默认值）。
 **调用方**：安装后一次性设置（人）；技能壳 precheck 脚本（AI）。
 
 ```
-tbp config get [key]        # 查看全部或单项
-tbp config set <key> <val>  # 写入单项
-tbp config path             # 显示配置文件绝对路径
+b2m config get [key]        # 查看全部或单项
+b2m config set <key> <val>  # 写入单项
+b2m config path             # 显示配置文件绝对路径
 ```
 
 | key | 取值 | 说明 |
 |---|---|---|
 | `workspace` | 绝对路径 | 默认工作区（四层解析的第 3 层） |
 | `backend` | `mineru-remote` \| `local-mineru` \| `manual` | 抽取后端，对应 extractors/ 下的适配器 |
-| `backend_endpoint` | URL，如 `http://<网关地址>:8000` | 抽取网关端点（docs/backend.md；端点禁止硬编码，亦可环境变量 `TBP_BACKEND_API` 覆盖） |
+| `backend_endpoint` | URL，如 `http://<网关地址>:8000` | 抽取网关端点（docs/backend.md；端点禁止硬编码，亦可环境变量 `B2M_BACKEND_API` 覆盖） |
 | `subjects` | 逗号分隔科目 id | 已接入科目，如 `math-renjiao-a,chem-renjiao` |
 
 **处理流程**：`set` 时校验 key 合法 → `workspace` 需可创建（试建目录）→ 写回 JSON
@@ -115,7 +115,7 @@ tbp config path             # 显示配置文件绝对路径
 {"cmd":"config","ok":true,"exit_code":0,
  "config":{"workspace":"D:/教材工作区","backend":"mineru-remote",
            "subjects":["math-renjiao-a"]},
- "config_path":"C:/Users/xiesh/.tbp/config.json"}
+ "config_path":"C:/Users/xiesh/.b2m/config.json"}
 ```
 
 **错误**：未知 key → 20；`set workspace` 路径不可创建 → 20。
@@ -126,7 +126,7 @@ tbp config path             # 显示配置文件绝对路径
 
 ```jsonc
 {
-  "schema": "tbp.issues/v1",
+  "schema": "b2m.issues/v1",
   "book": "化学必修第一册",
   "generated_at": "2026-10-24T23:00:00+08:00",
   "counts": { "A": 3, "B": 23, "C": 4 },
@@ -148,7 +148,7 @@ tbp config path             # 显示配置文件绝对路径
 
 ```jsonc
 {
-  "schema": "tbp.provenance/v1",
+  "schema": "b2m.provenance/v1",
   "source_pdf": {"name": "化学必修第一册.pdf", "sha256": "…"},   // PDF 是唯一事实源，指纹必须含哈希
   "adapter": "mineru-remote",
   "gateway": {"endpoint": "http://<网关地址>:8000", "tier": "basic"},
@@ -159,25 +159,25 @@ tbp config path             # 显示配置文件绝对路径
     "patched_files": [{"path": "mineru/model/ocr/image.py",
                         "patch_id": "img-crop-min1", "present": true}]  // §4.3.6(e) 补丁在场校验结果
   },
-  "contract": "tbpipe.extraction/v1",
+  "contract": "b2m.extraction/v1",
   "extracted_at": "2026-10-24T23:00:00+08:00"
 }
 ```
 
-### 6.4 `tbp onboard` — 新书接入（人机协作回路入口）
+### 6.4 `b2m onboard` — 新书接入（人机协作回路入口）
 
 **用途**：一本新书的第一条命令。建工作区 → 抽取 → 全量基线扫描 → 产出 A/B/C 问题清单，
 **不产出 HTML**（裁定完成后由 `run` 产出）。**调用方**：技能壳（onboard 后进入 C 档
 裁定循环）；人（想先看体检结果再决定怎么修）。
 
 ```
-tbp onboard --subject chem-renjiao --pdf "D:/教材/化学必修第一册.pdf"
+b2m onboard --subject chem-renjiao --pdf "D:/教材/化学必修第一册.pdf"
             [--workspace D:/教材工作区] [--page-range 7-46] [--force]
 ```
 
 | 参数 | 必选 | 默认 | 说明 |
 |---|---|---|---|
-| `--subject` | ✅ | — | 科目 id，须存在 `textbook_pipe/configs/<id>.json` |
+| `--subject` | ✅ | — | 科目 id，须存在 `book2md/configs/<id>.json` |
 | `--pdf` | ✅ | — | 教材 PDF 路径 |
 | `--workspace` | ❌ | 四层解析 | 覆盖工作区位置 |
 | `--page-range` | ❌ | 全书 | 物理页范围 `N-M`，试转换/抽查用 |
@@ -213,13 +213,13 @@ tbp onboard --subject chem-renjiao --pdf "D:/教材/化学必修第一册.pdf"
 
 发现 C 档**不是错误**：exit 0，`warnings` 提示条数——裁定是人机循环的下一步，不是故障。
 
-### 6.5 `tbp extract` — 仅抽取（分步调试用）
+### 6.5 `b2m extract` — 仅抽取（分步调试用）
 
 **用途**：只做"PDF → Canonical Extraction"，不扫描不修复。**调用方**：调试适配器、
 重跑某页段、基准回归的底层。
 
 ```
-tbp extract --book 化学必修第一册 --pdf "D:/教材/化学必修第一册.pdf" [--force] [--page-range N-M]
+b2m extract --book 化学必修第一册 --pdf "D:/教材/化学必修第一册.pdf" [--force] [--page-range N-M]
 ```
 
 | 参数 | 必选 | 说明 |
@@ -239,13 +239,13 @@ tbp extract --book 化学必修第一册 --pdf "D:/教材/化学必修第一册.
 **产物 `contract.json`**：即方案 §4.4.2 的合约文件（schema/tool 指纹/pages/images/markdown/blocks）。
 校验失败 → 退出码 40，**不写 contract.json**（半成品契约不存在）。
 
-### 6.6 `tbp run` — 阶段 B 全流水线（六道质量门）
+### 6.6 `b2m run` — 阶段 B 全流水线（六道质量门）
 
 **用途**：以已抽取内容为输入，执行修复→渲染→检测→报告全链路，产出全部交付物。
 **调用方**：技能壳（裁定完成后）；人；CI。
 
 ```
-tbp run --book 化学必修第一册 --subject chem-renjiao
+b2m run --book 化学必修第一册 --subject chem-renjiao
         [--gates all] [--workspace D:/教材工作区]
 ```
 
@@ -278,13 +278,13 @@ rename 到 `<out>/<book>/`——任何失败时上一版产物完好无损。
 **错误**：`extract/<book>/contract.json` 缺失 → 50；任一门失败 → 10，
 `error.gate` 字段指明关卡、`qa_gate.log` 留全程记录。
 
-### 6.7 `tbp convert` — 一条命令全流程（无人值守）
+### 6.7 `b2m convert` — 一条命令全流程（无人值守）
 
 **用途**："PDF 进、全套产物出"的最终体验。CI / 定时任务 / 不想分步的人。
 **语义 = `extract` + `run` 的原子组合**，C 档内容按引擎默认处理。
 
 ```
-tbp convert --pdf "D:/教材/化学必修第一册.pdf" --subject chem-renjiao
+b2m convert --pdf "D:/教材/化学必修第一册.pdf" --subject chem-renjiao
 ```
 
 | 参数 | 必选 | 说明 |
@@ -304,13 +304,13 @@ tbp convert --pdf "D:/教材/化学必修第一册.pdf" --subject chem-renjiao
 | C 档 | 默认处理 + 复核队列 | 人工裁定后规则生效 |
 | 适用 | 批量/试转换/CI | 首本精修书、质量要求高的书 |
 
-### 6.8 `tbp scan` — 只读体检
+### 6.8 `b2m scan` — 只读体检
 
 **用途**：不改任何转换产物，仅跑探测器矩阵 + 渲染验证，刷新 issues.json。
 **调用方**：规则修改后的回归自查；技能壳刷新裁定清单。
 
 ```
-tbp scan --book 化学必修第一册 --subject chem-renjiao [--source out|extract]
+b2m scan --book 化学必修第一册 --subject chem-renjiao [--source out|extract]
 ```
 
 | 参数 | 必选 | 默认 | 说明 |
@@ -321,24 +321,24 @@ tbp scan --book 化学必修第一册 --subject chem-renjiao [--source out|extra
 `--source extract` 时输出的是"规则尚未生效的原始错识量"，用于评估规则包完备度。
 issues.json 按 `detector+line` 重新生成，保证 id 稳定可比。
 
-### 6.9 `tbp report` — 重生目录与质检报告
+### 6.9 `b2m report` — 重生目录与质检报告
 
 **用途**：只读 `out/<book>/markdown.md`，重建 `TOC.md` 与 `质检报告.md`
 （语义 = regen_toc_qa.py，行为保持）。md 本体永不改动。
 
 ```
-tbp report --book 化学必修第一册        # 单册
-tbp report --all                       # workspace 内全部已转换书
+b2m report --book 化学必修第一册        # 单册
+b2m report --all                       # workspace 内全部已转换书
 ```
 
-### 6.10 `tbp baseline` — 基准回归（防后端静默漂移）
+### 6.10 `b2m baseline` — 基准回归（防后端静默漂移）
 
 **用途**：方案 §4.3.3/§4.3.6 版本指纹机制的执行入口。固定"已知良好"页样本，
 后端升级/换适配器后重抽比对，超阈值即拦截。
 
 ```
-tbp baseline init --subject math-renjiao-a     # 首次：从已验收书抽页入库 + 记录基线
-tbp baseline run [--subject <id>] [--pdf <路径>]   # 例行：重抽 → 同页扫描 → 指标比对
+b2m baseline init --subject math-renjiao-a     # 首次：从已验收书抽页入库 + 记录基线
+b2m baseline run [--subject <id>] [--pdf <路径>]   # 例行：重抽 → 同页扫描 → 指标比对
 ```
 
 **init 规则**：每本已验收书抽固定页集，三级优先（2026-10-27 定版）——

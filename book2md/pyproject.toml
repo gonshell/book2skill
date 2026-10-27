@@ -3,22 +3,21 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "textbook-pipe"
-version = "0.2.0"
+name = "book2md"
+version = "0.3.0"
 description = "教材 PDF → md+图片+公式 → 双版本单体 HTML 的独立转换工具"
 requires-python = ">=3.13"
 dependencies = []
 
 [project.scripts]
-tbp = "textbook_pipe.cli:main"
-tbpipe = "textbook_pipe.cli:main"   # 过渡期别名（Q5 定稿：C 方案）
+b2m = "book2md.cli:main"
 
 [project.optional-dependencies]
 extract = ["pymupdf"]   # 仅本地读 PDF 页数用（远程抽取时不装亦可）
 
 [tool.setuptools.packages.find]
-include = ["textbook_pipe*"]
+include = ["book2md*"]
 
 # KaTeX 0.16.11 资产随包分发（docs/install.md 锁定表）——缺此段 wheel 安装后渲染不可用
 [tool.setuptools.package-data]
-textbook_pipe = ["assets/*.js", "assets/katex/*", "assets/katex/fonts/*"]
+book2md = ["assets/*.js", "assets/katex/*", "assets/katex/fonts/*"]

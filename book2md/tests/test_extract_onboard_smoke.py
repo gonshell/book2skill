@@ -16,8 +16,8 @@ import unittest
 from contextlib import redirect_stdout
 from unittest import mock
 
-from textbook_pipe import cli
-from textbook_pipe.extractors import mineru
+from book2md import cli
+from book2md.extractors import mineru
 
 MD = "题图见图 (images/page_1_fig.png)。$x^2$ 检验文本。"
 
@@ -70,7 +70,7 @@ class redirect_stderr_to:
 
 class ExtractSmoke(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="tbp-smoke-")
+        self.tmp = tempfile.mkdtemp(prefix="b2m-smoke-")
         self.ws = os.path.join(self.tmp, "ws")
 
     def tearDown(self):
@@ -78,7 +78,7 @@ class ExtractSmoke(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_extract_no_endpoint(self):
-        with mock.patch("textbook_pipe.commands.extract.resolve_api", return_value=None):
+        with mock.patch("book2md.commands.extract.resolve_api", return_value=None):
             pdf = _mkpdf(self.tmp)
             rc, out = _run(["extract", "--book", "fake-book", "--pdf", pdf,
                             "--page-range", "7-7", "--workspace", self.ws])
@@ -93,7 +93,7 @@ class ExtractSmoke(unittest.TestCase):
         self.assertEqual(out["error"]["code"], "NOT_FOUND")
 
     def test_extract_page_range_bad(self):
-        from textbook_pipe.commands.extract import parse_page_range
+        from book2md.commands.extract import parse_page_range
         with self.assertRaises(ValueError):
             parse_page_range("7-3")
         with self.assertRaises(ValueError):
@@ -102,7 +102,7 @@ class ExtractSmoke(unittest.TestCase):
         self.assertEqual(parse_page_range(None), (None, None))
 
     def test_extract_backend_failed_maps_30(self):
-        with mock.patch("textbook_pipe.commands.extract.resolve_api",
+        with mock.patch("book2md.commands.extract.resolve_api",
                         return_value="http://127.0.0.1:1"), \
                 mock.patch.object(mineru, "convert_block",
                                   lambda *a, **k: ("failed", "HTTP 000 simulated")):
@@ -113,7 +113,7 @@ class ExtractSmoke(unittest.TestCase):
         self.assertEqual(out["error"]["code"], "BACKEND_FAILED")
 
     def test_extract_full_offline(self):
-        with mock.patch("textbook_pipe.commands.extract.resolve_api",
+        with mock.patch("book2md.commands.extract.resolve_api",
                         return_value="http://127.0.0.1:1"), \
                 mock.patch.object(mineru, "convert_block",
                                   _fake_block_factory(MD, page_idx=6, book_page=1)):
@@ -133,7 +133,7 @@ class ExtractSmoke(unittest.TestCase):
 
         contract = json.load(open(os.path.join(self.ws, "extract", "fake-book",
                                                "contract.json"), encoding="utf-8"))
-        self.assertEqual(contract["schema"], "tbpipe.extraction/v1")
+        self.assertEqual(contract["schema"], "b2m.extraction/v1")
         self.assertTrue(contract["source_pdf"]["sha256"])  # 指纹必须含哈希（非 None）
         self.assertEqual(contract["images"],
                          [{"asset": "images/page_7_fig.png",
@@ -147,11 +147,11 @@ class ExtractSmoke(unittest.TestCase):
 
 class OnboardSmoke(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="tbp-smoke-")
+        self.tmp = tempfile.mkdtemp(prefix="b2m-smoke-")
         self.ws = os.path.join(self.tmp, "ws")
         self.cfg_dir = os.path.join(self.tmp, "subject-configs")
         self.pdf = _mkpdf(self.tmp)
-        self.argv = ["onboard", "--subject", "tbp-fake", "--pdf", self.pdf,
+        self.argv = ["onboard", "--subject", "b2m-fake", "--pdf", self.pdf,
                      "--page-range", "7-7", "--workspace", self.ws]
 
     def tearDown(self):
@@ -159,7 +159,7 @@ class OnboardSmoke(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_onboard_full_offline(self):
-        import textbook_pipe.commands.onboard as onboard
+        import book2md.commands.onboard as onboard
         api = "http://127.0.0.1:1"
         with mock.patch.object(onboard, "CONFIGS_DIR", self.cfg_dir), \
                 mock.patch.object(onboard, "resolve_api", return_value=api):
@@ -167,8 +167,8 @@ class OnboardSmoke(unittest.TestCase):
             rc, out = _run(self.argv)
             self.assertEqual(rc, 20)
             self.assertEqual(out["error"]["code"], "NO_SUBJECT_CONFIG")
-            tpl = json.load(open(os.path.join(self.cfg_dir, "tbp-fake.json"), encoding="utf-8"))
-            self.assertEqual(tpl["subject"], "tbp-fake")
+            tpl = json.load(open(os.path.join(self.cfg_dir, "b2m-fake.json"), encoding="utf-8"))
+            self.assertEqual(tpl["subject"], "b2m-fake")
             self.assertIn("toc_chapter_pattern", tpl)
 
             # 网关不可达 → 退出码 30
@@ -188,10 +188,10 @@ class OnboardSmoke(unittest.TestCase):
 
         out_dir = os.path.join(self.ws, "out", "fake-book")
         issues = json.load(open(os.path.join(out_dir, "issues.json"), encoding="utf-8"))
-        self.assertEqual(issues["schema"], "tbp.issues/v1")
+        self.assertEqual(issues["schema"], "b2m.issues/v1")
         self.assertEqual(issues["book"], "fake-book")
         prov = json.load(open(os.path.join(out_dir, "provenance.json"), encoding="utf-8"))
-        self.assertEqual(prov["schema"], "tbp.provenance/v1")
+        self.assertEqual(prov["schema"], "b2m.provenance/v1")
         self.assertEqual(prov["adapter"], "mineru-remote")
         self.assertEqual(prov["gateway"], {"endpoint": api, "tier": "basic"})
         self.assertTrue(prov["source_pdf"]["sha256"])

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""tbp baseline 接线冒烟测试（离线，不依赖网关，spec §6.10）。
+"""b2m baseline 接线冒烟测试（离线，不依赖网关，spec §6.10）。
 
 init 走真实链路（out/ 产物切片 → 探测器 + KaTeX 渲染计量）；
 run 以 mock convert_block 注入同内容/漂移 zip，验证三态退出码。
@@ -15,7 +15,7 @@ import zipfile
 from contextlib import redirect_stdout
 from unittest import mock
 
-from textbook_pipe import cli
+from book2md import cli
 
 SEG7 = "# 第一章 示例\n\n题图见图 (images/page_1_fig.png)。\n\n$x^2+1$ 是多项式。\n\n## 小节\n\n正文。"
 SEG8 = "# 第一章 续\n\n$a+b=c$ 且 $\\frac{1}{2}>0$。\n\n段落文字若干，用于字符计数。"
@@ -86,7 +86,7 @@ class BaselineSmoke(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.mkdtemp(prefix="tbp-bl-")
+        cls.tmp = tempfile.mkdtemp(prefix="b2m-bl-")
         cls.ws = os.path.join(cls.tmp, "ws")
         book_dir = os.path.join(cls.ws, "out", "fake-book", "images")
         os.makedirs(book_dir)
@@ -106,19 +106,19 @@ class BaselineSmoke(unittest.TestCase):
     # ---------- init ----------
 
     def test_1_init_no_books_maps_50(self):
-        rc, out = _run(["baseline", "init", "--subject", "tbp-bl",
+        rc, out = _run(["baseline", "init", "--subject", "b2m-bl",
                         "--book", "不存在", "--workspace", self.ws])
         self.assertEqual(rc, 50)
         self.assertEqual(out["error"]["code"], "NO_BOOKS")
 
     def test_2_init_ok(self):
-        rc, out = _run(["baseline", "init", "--subject", "tbp-bl",
+        rc, out = _run(["baseline", "init", "--subject", "b2m-bl",
                         "--workspace", self.ws])
         self.assertEqual(rc, 0, out)
-        bpath = os.path.join(self.ws, "baselines", "tbp-bl", "baseline.json")
+        bpath = os.path.join(self.ws, "baselines", "b2m-bl", "baseline.json")
         with open(bpath, encoding="utf-8") as fh:
             base = json.load(fh)
-        self.assertEqual(base["schema"], "tbp.baseline/v1")
+        self.assertEqual(base["schema"], "b2m.baseline/v1")
         self.assertEqual(base["books"]["fake-book"][0]["block"], "7-7")
         item = base["books"]["fake-book"][0]
         self.assertGreater(item["chars"], 0)
@@ -126,9 +126,9 @@ class BaselineSmoke(unittest.TestCase):
         self.assertEqual(item["detectors_total"], 0)   # 已验收产物应零命中
         # 样本抽取产物与图片入库
         self.assertTrue(os.path.exists(
-            os.path.join(self.ws, "baselines", "tbp-bl", "fake-book", "seg_7-7.md")))
+            os.path.join(self.ws, "baselines", "b2m-bl", "fake-book", "seg_7-7.md")))
         self.assertTrue(os.path.exists(
-            os.path.join(self.ws, "baselines", "tbp-bl", "fake-book", "images",
+            os.path.join(self.ws, "baselines", "b2m-bl", "fake-book", "images",
                          "page_7_fig.png")))
 
     # ---------- run ----------
@@ -140,9 +140,9 @@ class BaselineSmoke(unittest.TestCase):
         self.assertEqual(out["error"]["code"], "NO_BASELINE")
 
     def test_4_run_no_endpoint_maps_30(self):
-        with mock.patch("textbook_pipe.commands.baseline.resolve_api",
+        with mock.patch("book2md.commands.baseline.resolve_api",
                         return_value=None):
-            rc, out = _run(["baseline", "run", "--subject", "tbp-bl",
+            rc, out = _run(["baseline", "run", "--subject", "b2m-bl",
                             "--workspace", self.ws])
         self.assertEqual(rc, 30)
         self.assertEqual(out["error"]["code"], "NO_ENDPOINT")
@@ -150,11 +150,11 @@ class BaselineSmoke(unittest.TestCase):
     def test_5_run_consistent_maps_0(self):
         # 重抽 zip 内是原始页号（page_1_*），经 merge_one 重编号后与基线一致
         same = {(7, 7): SEG7, (8, 9): SEG8, (10, 10): SEG10}
-        with mock.patch("textbook_pipe.commands.baseline.resolve_api",
+        with mock.patch("book2md.commands.baseline.resolve_api",
                         return_value="http://127.0.0.1:1"), \
-                mock.patch.object(sys.modules["textbook_pipe.extractors.mineru"],
+                mock.patch.object(sys.modules["book2md.extractors.mineru"],
                                   "convert_block", _block_factory(same)):
-            rc, out = _run(["baseline", "run", "--subject", "tbp-bl",
+            rc, out = _run(["baseline", "run", "--subject", "b2m-bl",
                             "--workspace", self.ws])
         self.assertEqual(rc, 0, out)
         self.assertEqual(out["status"], "一致")
@@ -164,11 +164,11 @@ class BaselineSmoke(unittest.TestCase):
     def test_6_run_drift_maps_40(self):
         drifted = {(7, 7): SEG7 + "\n\n后端漂移注入的额外段落内容。",
                    (8, 9): SEG8, (10, 10): SEG10}
-        with mock.patch("textbook_pipe.commands.baseline.resolve_api",
+        with mock.patch("book2md.commands.baseline.resolve_api",
                         return_value="http://127.0.0.1:1"), \
-                mock.patch.object(sys.modules["textbook_pipe.extractors.mineru"],
+                mock.patch.object(sys.modules["book2md.extractors.mineru"],
                                   "convert_block", _block_factory(drifted)):
-            rc, out = _run(["baseline", "run", "--subject", "tbp-bl",
+            rc, out = _run(["baseline", "run", "--subject", "b2m-bl",
                             "--workspace", self.ws])
         self.assertEqual(rc, 40)
         self.assertEqual(out["status"], "漂移")
@@ -195,7 +195,7 @@ class BaselineMeasureParity(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.mkdtemp(prefix="tbp-blp-")
+        cls.tmp = tempfile.mkdtemp(prefix="b2m-blp-")
         cls.ws = os.path.join(cls.tmp, "ws")
         bdir = os.path.join(cls.ws, "out", "chem-book")
         os.makedirs(os.path.join(bdir, "images"))
@@ -227,9 +227,9 @@ class BaselineMeasureParity(unittest.TestCase):
 
     def test_2_rule_fixable_raw_is_not_drift(self):
         raw = {(7, 7): self.RAW}
-        with mock.patch("textbook_pipe.commands.baseline.resolve_api",
+        with mock.patch("book2md.commands.baseline.resolve_api",
                         return_value="http://127.0.0.1:1"), \
-                mock.patch.object(sys.modules["textbook_pipe.extractors.mineru"],
+                mock.patch.object(sys.modules["book2md.extractors.mineru"],
                                   "convert_block", _block_factory(raw)):
             rc, out = _run(["baseline", "run", "--subject", "chem-blp",
                             "--workspace", self.ws])

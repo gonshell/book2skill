@@ -1,7 +1,7 @@
 # backend.md — MinerU 网关契约与版本锁定
 
 > 状态：2026-10-24 建档。**"已核实"值为实测；"待网关核实"项须由网关运维填写后方可冻结。**
-> tbpipe 启动时校验实际指纹 ∈ 本文件允许集合，不符即退出码 40（见 docs/spec-cli.md §3）。
+> b2m 启动时校验实际指纹 ∈ 本文件允许集合，不符即退出码 40（见 docs/spec-cli.md §3）。
 
 ## 1. 网关端点与 API 契约（已核实——源自 run_blocks.py 实际调用）
 
@@ -48,7 +48,7 @@
 | 部署形态 | 镜像 / 启动命令 / 挂载 | ✅ **已核实（2026-10-26 `docker inspect`）**：镜像 `mineru:pascal`，容器 `mineru-api`；`mineru-kit api-server --host 0.0.0.0 --port 8000 --tier basic --disable-image-analysis`；`--gpus all`、`-p 8000:8000`、**零挂载**（模型烘焙进镜像）、`restart unless-stopped` | 手册 §4.1 |
 | 服务限额 | 1000 页/文件、200 MB/文件、100 文件/任务、`max_concurrent_jobs: 1`、文件保留 1 天 | ✅ **已核实（2026-10-26 远程）** | `/v1/usage` |
 
-> ⚠️ **版本已核实（4.0.12）后的纪律仍然有效**：`tbp baseline` 是**唯一**的漂移防线——
+> ⚠️ **版本已核实（4.0.12）后的纪律仍然有效**：`b2m baseline` 是**唯一**的漂移防线——
 > 网关侧任何升级前必须先跑 `baseline run`。已知图片数量类指标（悬空引用/缺图）
 > 存在 run 间噪声（同版本重抽 18↔21），字符指标（±0.5% 容差）才是稳定锚点；
 > `provenance.json` 版本字段自 2026-10-26 起可填 `4.0.12`（源：`/v1/health`）。

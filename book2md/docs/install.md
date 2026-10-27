@@ -18,22 +18,22 @@
 ```bash
 # ① 环境：Python ≥3.13 + Node.js（见上表锁定值）
 # ② 安装核心包
-pip install -e textbook-pipe/           # 或发布后: pip install textbook-pipe
+pip install -e book2md/           # 或发布后: pip install book2md
 # ③ 验证 + 配置
-tbp --version                           # 别名 tbpipe 等效
-tbp config set workspace "D:/教材工作区"
-tbp config set backend mineru-remote
+b2m --version                           # 显示版本号
+b2m config set workspace "D:/教材工作区"
+b2m config set backend mineru-remote
 ```
 
-技能壳安装（可选）：将 `skill-textbook-pipe/` 目录拷贝至
-`~/.workbuddy/skills/textbook-pipe/`（前缀 `skill-` 仅仓库内区分用）。
+技能壳安装（可选）：将 `skill-book2md/` 目录拷贝至
+`~/.workbuddy/skills/book2md/`（前缀 `skill-` 仅仓库内区分用）。
 
 ## 3. 命名含义表（所有自造词）
 
 | 名称 | 含义 |
 |---|---|
-| `textbook-pipe` | 包名；"pipe"=抽取→修复→渲染→质检全流水线 |
-| `tbp` | CLI 命令（`tbpipe` 为过渡别名，行为一致） |
+| `book2md` | 包名；"pipe"=抽取→修复→渲染→质检全流水线 |
+| `b2m` | CLI 命令（`b2m` 为过渡别名，行为一致） |
 | `baselines/` | 基准样本集（golden master 惯用名的规范化用词） |
 | `workspace` | 运行工作区：out/ 产物、overlays/ 裁定规则、blocks/ 缓存、ledger 账本 |
 | Canonical Extraction | 抽取归一化契约（方案 §4.4.2），阶段 B 唯一输入格式 |
@@ -42,11 +42,11 @@ tbp config set backend mineru-remote
 
 ```bash
 # 首本书接入（建目录树 + 科目配置模板 + 抽取 + 基线扫描）
-tbp onboard --subject chem-renjiao --pdf "D:/教材/化学必修第一册.pdf"
+b2m onboard --subject chem-renjiao --pdf "D:/教材/化学必修第一册.pdf"
 # 科目配置不存在时会生成模板并以退出码 20 结束——编辑 configs 后重跑
 ```
 
 ## 5. 升级纪律
 
-- 任何客户端依赖（Node/KaTeX 快照）变更 → 必须先 `tbp baseline run` → 再全量五册对账
+- 任何客户端依赖（Node/KaTeX 快照）变更 → 必须先 `b2m baseline run` → 再全量五册对账
 - KaTeX 资产升级 = 渲染结果可能变化，视同后端升级对待（同走基准回归）

@@ -334,7 +334,7 @@ GET/POST http://<网关地址>:8000/v1/file_parse
 
 | 参数 | 值 | 说明 |
 |---|---|---|
-| `tier` | `basic`（**锁定**） | OCR 质量档位直接决定下游 S1–S20 修复规则的适用前提；变更必须先过基准回归（`tbp baseline run`） |
+| `tier` | `basic`（**锁定**） | OCR 质量档位直接决定下游 S1–S20 修复规则的适用前提；变更必须先过基准回归（`b2m baseline run`） |
 | `response_format` | `zip`（锁定） | 返回 md + images + middle_json 打包 |
 | `wait_timeout` | `900` 秒 | 单块同步等待；整书提交会超时，**必须分块** |
 | `page_range` | `N-M` 物理页 | 分块 / 断点续跑 / 试转换都依赖它 |
@@ -382,7 +382,7 @@ wrapper 为 **FastAPI**（`title: "MinerU API"`，API 版本 1.0.0），共 19 �
 
 ### 7.2 纪律【强制，继承 backend.md】
 
-1. **升级前必跑基准回归**：`tbp baseline run` 是**唯一**的漂移防线——网关侧任何升级（含模型权重更新）前先跑，逐指标比对通过才允许升级（已知：图片数量类指标天然有 run 间噪声，字符指标才是稳定锚点）；
+1. **升级前必跑基准回归**：`b2m baseline run` 是**唯一**的漂移防线——网关侧任何升级（含模型权重更新）前先跑，逐指标比对通过才允许升级（已知：图片数量类指标天然有 run 间噪声，字符指标才是稳定锚点）；
 2. **provenance 禁占位假值**：版本未核实期间 `provenance.json` 相关字段显式记 `null`；
 3. **重建镜像 = 重打补丁 + 重校模型 sha256**（§5.4 + §3.3）；
 4. tier/response_format 是**契约**，改动等同破坏下游修复规则前提。
@@ -442,7 +442,7 @@ nvidia-smi --query-gpu=name,memory.total,driver_version,compute_cap --format=csv
 | `deploy/mineru-gateway/test_patch5.py` | patch5 七变体本地验证 |
 | `docs/backend.md` | 网关契约与版本锁定（权威文档） |
 | `tests/fixtures/blocks/…/block_87-114.zip` | 真实网关返回样例（金样本） |
-| `../gzsx-md/工艺流程.md` | 五册转换工艺（含启动与 CUDA 验证留痕，历史原件区） |
+| `../../gzsx-md/工艺流程.md` | 五册转换工艺（含启动与 CUDA 验证留痕，历史原件区） |
 
 ---
 

@@ -5,7 +5,7 @@
 引擎有意演进产生的差异须逐行登记在 `fixtures/parity_delta_allowlist.json`
 （当前仅 S16③ 的 OCR 拆散数字修复，共 5 行对）；除此之外任何差异仍判失败。
 
-前置：环境变量 TBP_PARITY_SOURCE 指向 gzsx-md 原目录（只读，不作任何改动）；
+前置：环境变量 B2M_PARITY_SOURCE 指向 gzsx-md 原目录（只读，不作任何改动）；
 未设置时整批 skip（他机 / CI 无原件时不阻塞）。
 """
 import os
@@ -13,24 +13,24 @@ import shutil
 import tempfile
 import unittest
 
-from textbook_pipe.engine import rules
+from book2md.engine import rules
 try:                                       # python tests/x.py（run_tests.sh 口径）
     from parity_util import unexpected_delta
 except ImportError:                        # python -m unittest tests.x
     from tests.parity_util import unexpected_delta
 
-SRC = os.environ.get("TBP_PARITY_SOURCE")
+SRC = os.environ.get("B2M_PARITY_SOURCE")
 BOOKS = ["选择性必修第三册", "选择性必修第二册", "选择性必修第一册", "必修第二册", "必修第一册"]
 
 
-@unittest.skipUnless(SRC, "未设置 TBP_PARITY_SOURCE（指向 gzsx-md 原目录），跳过行为保持对账")
+@unittest.skipUnless(SRC, "未设置 B2M_PARITY_SOURCE（指向 gzsx-md 原目录），跳过行为保持对账")
 class BehaviorParityTest(unittest.TestCase):
 
     def test_book_parity(self):
         backup_dir = os.path.join(SRC, "final_backup_20261022")
         for book in BOOKS:
             with self.subTest(book=book):
-                with tempfile.TemporaryDirectory(prefix="tbp_parity_") as tmp:
+                with tempfile.TemporaryDirectory(prefix="b2m_parity_") as tmp:
                     out_root = os.path.join(tmp, "out")
                     os.makedirs(os.path.join(out_root, book, "images"))
                     src_img = os.path.join(SRC, "final", book, "images")

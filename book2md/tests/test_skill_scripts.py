@@ -12,7 +12,7 @@ import tempfile
 import unittest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCRIPTS = os.path.join(REPO, "skill-textbook-pipe", "scripts")
+SCRIPTS = os.path.join(REPO, "skill-book2md", "scripts")
 
 
 def run_script(name, *args):
@@ -28,25 +28,25 @@ def run_script(name, *args):
 
 class PrecheckTests(unittest.TestCase):
     def test_full_pass_in_dev_env(self):
-        rc, env = run_script("precheck.py", "--workspace", tempfile.mkdtemp(prefix="tbp-skill-"))
+        rc, env = run_script("precheck.py", "--workspace", tempfile.mkdtemp(prefix="b2m-skill-"))
         self.assertEqual(rc, 0, env)
         self.assertTrue(env["ok"])
         names = {c["name"] for c in env["checks"]}
-        self.assertTrue({"tbp_import", "tbp_entry", "node", "katex_assets",
+        self.assertTrue({"b2m_import", "b2m_entry", "node", "katex_assets",
                          "workspace_writable"} <= names)
         for c in env["checks"]:
             if c["fatal"]:
                 self.assertTrue(c["ok"], c)
-        # tbp_entry 非致命（python -m 降级路径），开发环境源码方式未进 PATH 也应通过
-        entry = [c for c in env["checks"] if c["name"] == "tbp_entry"][0]
+        # b2m_entry 非致命（python -m 降级路径），开发环境源码方式未进 PATH 也应通过
+        entry = [c for c in env["checks"] if c["name"] == "b2m_entry"][0]
         self.assertFalse(entry["fatal"])
 
     def test_endpoint_unconfigured_nonfatal(self):
-        ws = tempfile.mkdtemp(prefix="tbp-skill-")
+        ws = tempfile.mkdtemp(prefix="b2m-skill-")
         # 保证端点解析干净（环境变量可能继承）
         import unittest.mock as mock
         with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("TBP_BACKEND_API", None)
+            os.environ.pop("B2M_BACKEND_API", None)
             rc, env = run_script("precheck.py", "--workspace", ws, "--check-endpoint")
         self.assertEqual(rc, 0)   # 端点缺失仅警告（不致命）
         ep = [c for c in env["checks"] if c["name"] == "endpoint"][0]
@@ -72,8 +72,8 @@ class PrecheckTests(unittest.TestCase):
         srv = HTTPServer(("127.0.0.1", 0), Handler)
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         try:
-            ws = tempfile.mkdtemp(prefix="tbp-skill-")
-            env = dict(os.environ, TBP_BACKEND_API="http://127.0.0.1:%d" % srv.server_port)
+            ws = tempfile.mkdtemp(prefix="b2m-skill-")
+            env = dict(os.environ, B2M_BACKEND_API="http://127.0.0.1:%d" % srv.server_port)
             import subprocess
             proc = subprocess.run([sys.executable, os.path.join(SCRIPTS, "precheck.py"),
                                    "--workspace", ws, "--check-endpoint"],
@@ -89,9 +89,9 @@ class PrecheckTests(unittest.TestCase):
 
     def test_endpoint_unreachable_maps_30(self):
         """端点不可达 → 退出码 30，但仍非致命（离线命令可用）。"""
-        ws = tempfile.mkdtemp(prefix="tbp-skill-")
+        ws = tempfile.mkdtemp(prefix="b2m-skill-")
         import subprocess
-        env = dict(os.environ, TBP_BACKEND_API="http://127.0.0.1:1")
+        env = dict(os.environ, B2M_BACKEND_API="http://127.0.0.1:1")
         proc = subprocess.run([sys.executable, os.path.join(SCRIPTS, "precheck.py"),
                                "--workspace", ws, "--check-endpoint"],
                               capture_output=True, text=True, encoding="utf-8",
@@ -105,7 +105,7 @@ class PrecheckTests(unittest.TestCase):
 
 class VerifyDeliveryTests(unittest.TestCase):
     def setUp(self):
-        self.ws = tempfile.mkdtemp(prefix="tbp-skill-")
+        self.ws = tempfile.mkdtemp(prefix="b2m-skill-")
         self.book = "测试册"
 
     def _build_delivery(self, html=True, kb_html=True, images=True, layout="legacy"):
@@ -114,7 +114,7 @@ class VerifyDeliveryTests(unittest.TestCase):
         os.makedirs(bd, exist_ok=True)
         for f in ("markdown.md", "qa_gate.log", "TOC.md", "质检报告.md"):
             open(os.path.join(bd, f), "w", encoding="utf-8").write("x")
-        json.dump({"schema": "tbp.issues/v1", "counts": {"A": 0, "B": 0, "C": 0},
+        json.dump({"schema": "b2m.issues/v1", "counts": {"A": 0, "B": 0, "C": 0},
                    "items": []},
                   open(os.path.join(bd, "issues.json"), "w", encoding="utf-8"))
         if images:
@@ -190,11 +190,11 @@ class VerifyDeliveryTests(unittest.TestCase):
 
 class AdjudicateOverlayTests(unittest.TestCase):
     def setUp(self):
-        self.ws = tempfile.mkdtemp(prefix="tbp-skill-")
+        self.ws = tempfile.mkdtemp(prefix="b2m-skill-")
         self.book = "测试册"
         bd = os.path.join(self.ws, "out", self.book)
         os.makedirs(bd, exist_ok=True)
-        self.issues = {"schema": "tbp.issues/v1", "book": self.book,
+        self.issues = {"schema": "b2m.issues/v1", "book": self.book,
                        "counts": {"A": 3, "B": 5, "C": 2},
                        "items": [
                            {"id": "I-0001", "tier": "C", "detector": "顶点bar误识",
@@ -225,7 +225,7 @@ class AdjudicateOverlayTests(unittest.TestCase):
                              "--book", self.book, "--note", "首轮裁定完成")
         self.assertEqual(rc, 0, env)
         entry = json.loads(open(env["overlay"], encoding="utf-8").read().splitlines()[-1])
-        self.assertEqual(entry["schema"], "tbp.overlay/v1")
+        self.assertEqual(entry["schema"], "b2m.overlay/v1")
         self.assertEqual(entry["status"], "scaffold")
         self.assertIn("首轮裁定完成", entry["note"])
         self.assertTrue(os.path.exists(os.path.join(self.ws, "overlays", self.book, "README.md")))
@@ -240,7 +240,7 @@ class IssuesCollectTests(unittest.TestCase):
     """issues.json 两条来源：探测器命中（B 档，带行号）+ S16 降级清单（C 档）。"""
 
     def setUp(self):
-        self.root = tempfile.mkdtemp(prefix="tbp-issues-")
+        self.root = tempfile.mkdtemp(prefix="b2m-issues-")
         self.book = "测试册"
         self.bd = os.path.join(self.root, self.book)
         os.makedirs(os.path.join(self.bd, "images"), exist_ok=True)
@@ -249,7 +249,7 @@ class IssuesCollectTests(unittest.TestCase):
 
     def _collect(self):
         sys.path.insert(0, REPO)
-        from textbook_pipe.commands import _issues
+        from book2md.commands import _issues
         return _issues.collect(self.book, self.root, books=[self.book])
 
     def test_detector_items_carry_line_and_excerpt(self):

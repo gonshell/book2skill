@@ -15,7 +15,7 @@ import sys
 import tempfile
 import unittest
 
-from textbook_pipe.engine import render, rules
+from book2md.engine import render, rules
 
 
 class TestS16BrokenFormula(unittest.TestCase):

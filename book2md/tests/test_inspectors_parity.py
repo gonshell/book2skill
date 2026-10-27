@@ -4,7 +4,7 @@
 三个 inspectors 模块在 gzsx-md/final 上重跑，与原脚本（gzsx-md/scan3.py 等）
 的完整报告文本比对（原 stdout+stderr 合并 vs 新 stderr）。
 
-前置：环境变量 TBP_PARITY_SOURCE 指向 gzsx-md 原目录（只读）；未设置时整批 skip。
+前置：环境变量 B2M_PARITY_SOURCE 指向 gzsx-md 原目录（只读）；未设置时整批 skip。
 """
 import contextlib
 import io
@@ -14,13 +14,13 @@ import sys
 import unittest
 import warnings
 
-from textbook_pipe.engine.inspectors import detectors, integrity, texmath
+from book2md.engine.inspectors import detectors, integrity, texmath
 
 # 引擎模块遗留 open().read() 的未关闭文件在 gc 时机不定时会向捕获的 stderr
 # 播报 ResourceWarning——属进程内环境噪音，非行为差异，测试内统一压制
 warnings.simplefilter("ignore", ResourceWarning)
 
-SRC = os.environ.get("TBP_PARITY_SOURCE")
+SRC = os.environ.get("B2M_PARITY_SOURCE")
 PY = sys.executable
 
 
@@ -55,7 +55,7 @@ def norm(text):
     return "\n".join(out).strip()
 
 
-@unittest.skipUnless(SRC, "未设置 TBP_PARITY_SOURCE（指向 gzsx-md 原目录），跳过探测器对账")
+@unittest.skipUnless(SRC, "未设置 B2M_PARITY_SOURCE（指向 gzsx-md 原目录），跳过探测器对账")
 class InspectorsParityTest(unittest.TestCase):
 
     def test_detectors_report_parity(self):

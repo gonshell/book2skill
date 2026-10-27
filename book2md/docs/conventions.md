@@ -85,7 +85,7 @@
 改名只动文件名与 import，规则语义零改动，每步照跑字符数对账。
 S1–S20 规则的中文名称字段（数据）原样保留。
 
-| 原名（gzsx-md，只读原件） | 新名（textbook_pipe） | 理由 |
+| 原名（gzsx-md，只读原件） | 新名（book2md） | 理由 |
 |---|---|---|
 | `fix_md.py` | `engine/rules.py` | 规则库与应用器；"修复"语义由 packs 规则包语境承载 |
 | `md2html.py` | `engine/render.py` | 双版本渲染 + 字体内联 |
@@ -96,4 +96,4 @@ S1–S20 规则的中文名称字段（数据）原样保留。
 | `run_blocks.py` | `extractors/mineru.py` | 类 `RemoteMinerUAdapter` 承载"remote"形态；backend 可配置，不写入文件名 |
 | `rematch_merge.py` | `extractors/merge.py` | 页序重合并（v1 附录漏列，2026-10-25 补） |
 | `render_formulas.js` | `assets/katex/render_formulas.js` | 资产，名已达意 |
-| `tbpipe/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + `commands/` | 命令模块单词名：`commands/convert.py` `commands/baseline.py` … |
+| `b2m/` 骨架四文件 | 按 docs/spec-cli.md 重写 `cli.py` + `commands/` | 命令模块单词名：`commands/convert.py` `commands/baseline.py` … |
