@@ -3,21 +3,25 @@
 > 本文件是给任何在此仓库工作的 AI 编码助手（WorkBuddy / Claude Code / Cursor 等）的
 > 任务书与缰绳。**人读 README，AI 读这里。每次开始任务前必须先读完本文件。**
 
-## ⚠️ 当前状态（2026-10-25，v0.1.0）
+## ⚠️ 当前状态（2026-10-27，v0.2.0）
 
-**P1 核心包行为保持验收完成，系统级联调未做。**
+**全链路实测与联调完成：五册系统级通测、网关实抽/基准回归、化学书端到端、技能壳五步交付全通。**
+遗留：仅 E 人工复核队列（TOC OCR 噪音、2 条损坏公式按 PDF 补录等，故意不自动改写）。
+下一版本候选方向：覆盖层（L2）规则加载机制、更多学科接入。
 
-### 已完成的验收（2026-10-25，`bash run_tests.sh` 一键复现，30 例全绿）
+### 已完成的验收（2026-10-27，`bash run_tests.sh` 一键复现，67 例 + 5 套对账全绿）
 
 | 验收项 | 结论 | 复现方式 |
 |---|---|---|
-| 行为保持：五册修复产物一致（含 5 行已声明改动） | ✅ | `tests/test_behavior_parity.py`（TBP_PARITY_SOURCE） |
-| 行为保持：10 个 HTML 逐字节一致 | ✅ | `tests/test_render_parity.py`（约 10 分钟） |
+| 行为保持：五册修复产物一致（含 9 行已声明改动） | ✅ | `tests/test_behavior_parity.py`（TBP_PARITY_SOURCE） |
+| 行为保持：10 个 HTML 逐字节一致 | ✅ | `tests/test_render_parity.py`（约 14 分钟） |
 | 行为保持：3 份探测报告全文本一致 | ✅ | `tests/test_inspectors_parity.py` |
 | 行为保持：5 册合并输出一致（含 4 行已声明改动） | ✅ | `tests/test_merge_parity.py` |
 | 抽取契约（真实网关样例） | ✅ 8 例 | `tests/test_extraction_contract.py` |
 | 命令冒烟（extract/onboard/run/baseline 离线全流程） | ✅ 19 例 | 三套 smoke 测试（含 baseline 测量口径对等 2 例） |
 | S16 损坏公式降级 + 行内标签白名单 | ✅ 13 例 | `tests/test_s16_and_inline_tags.py` |
+| 指纹实测填充 + 抽样三级优先 | ✅ 11 例 | `tests/test_fingerprint_and_sampling.py` |
+| 技能壳四脚本（真实交付布局） | ✅ 18 例 | `tests/test_skill_scripts.py` |
 | 安装冒烟（wheel 安装 + KaTeX 资产随包 + 渲染端到端） | ✅ | 一次性 venv 已实证并删除 |
 
 > **已声明改动（2026-10-26，B4 化学书实战产出）**：引擎修复两个跨学科缺口后，数学书产物
@@ -36,9 +40,12 @@
 | 网关实抽联测（extract 真实抽取） | ✅ 2026-10-26 完成 | 试验册 p51-57 真实网关抽取，对历史基线相似度 98.75%，zip 契约完好；详见工作区 待确定事项台账.md B1 |
 | 基准回归实测（`tbp baseline run` 重抽比对） | ✅ 2026-10-26 完成（试验切片 + 整册） | 试验切片：init→run→RC40 三态正确；同版本重抽图片指标有噪声（18↔21）、字符稳定。**整册（化学书 139 页）：4 块重抽全部 `status 一致`**，并修掉两个测量口径缺陷——`_measure` 不带图导致 D10 全量假悬空、run 侧未过 S 规则导致假漂移（详见台账 B5）。指纹仍全 null（网关无 `/version`） |
 | 化学书实战（第一本化学教材端到端） | ✅ 2026-10-26 完成 | onboard 网关实抽 139 页 → run 七门全绿，产物齐全（双版 HTML 各 11.5 MB / 315 图 / TOC 268 条）。暴露并修复 3 缺口：merge 表格 `src=` 二次偏移漏改、S16 结构性损坏公式降级通道、md2html 转义白名单放行 sup/sub/u；详见台账 B4 |
+| D2 五步交付流程复验（tbp-ws-c） | ✅ 2026-10-27 完成 | precheck（exit 0，探活 200 version=4.0.12）→ verify_delivery（exit 0，gaps=[]，双版 HTML selfcontain 外部引用 0，315 图，issues A0/B0/C2）→ adjudicate_sheet（exit 0，复核表 2 items）→ overlay_scaffold（骨架在案，昨日登记 1 条不重复追加）→ convert（D1 已逐字节验证 convert ≡ onboard+run，不重跑）。指纹欠账已清：collect_fingerprint 实测填 4.0.12（来源 /v1/health），化学书基线已按新口径重建 |
 
-**提醒义务（强制）**：AI 在任何阶段性交付、总结、汇报时，**必须主动提醒**用户：
-"本项目除已列表的验收项外，系统级 run 通测、联调与网关侧功能均未实测。"——即使用户没有问。
+**提醒义务（历史口径，2026-10-27 起改写）**：原纪律为"AI 必须主动提醒系统级 run 通测、
+联调与网关侧功能均未实测"。上述实测已于 2026-10-26/27 全部完成（见上表），提醒义务
+相应改为：**"内容保真关口只在渲染与结构层；与原书一致性靠人工抽检，E 队列未清零前
+产物不得定稿发布"**——即使用户没有问。
 
 ## 1. AI Coding 输入清单（设计处 = 本节；冻结点 = 接口规格经用户审定）
 
@@ -93,4 +100,4 @@
 **阶段 C —— 联调（实测全部完成后）**
 
 8. ✅ 技能壳端到端联调（2026-10-26，全新工作区 tbp-ws-c 化学书整册）：convert 七门全 PASS，产物与此前 onboard+run 路径**逐字节相同**（md/双版 HTML/images 315）；实测修复壳侧 4 处断点（precheck 端点解析+health 探活、verify_delivery 真实 HTML 布局、C 档复核表数据源）并打通 issues 的 C 档闭环（详见台账 D1）
-9. ⬜ 全链路验收收尾、销账、视情况打 v0.2.0
+9. ✅ 全链路验收收尾、销账、打 v0.2.0（2026-10-27）：D2 五步交付复验全通；回归 67 例 + 5 套对账全绿（render 对账 827s，KaTeX 0 错误）；指纹欠账清零（/v1/health 实测 4.0.12）；baseline 抽样改按块自动覆盖；CHANGELOG + tag v0.2.0。**至此路线图全部完成，遗留仅 E 人工复核队列**

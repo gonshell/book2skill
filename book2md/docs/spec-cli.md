@@ -341,8 +341,11 @@ tbp baseline init --subject math-renjiao-a     # 首次：从已验收书抽页�
 tbp baseline run [--subject <id>] [--pdf <路径>]   # 例行：重抽 → 同页扫描 → 指标比对
 ```
 
-**init 规则**：每本已验收书抽固定页集（默认每册首/中/尾各 2 页，可经科目配置
-`baseline.pages` 覆盖）；原始页图与抽取产物入 `baselines/`；记录基线指标。
+**init 规则**：每本已验收书抽固定页集，三级优先（2026-10-27 定版）——
+① 科目配置 `baseline.pages` 显式页列表；② `baseline.blocks: "all"` 按账本抽取块
+全覆盖（每块整段入样，免手填页码；整册化学书实测默认抽样会漏表内图最密集块）；
+③ 默认每册首/中/尾各 2 页。原始页图与抽取产物入 `baselines/`；记录基线指标
+（版本指纹自 GET `/v1/health` 实测填充，探活失败一律 None）。
 
 **比对指标与阈值**：
 

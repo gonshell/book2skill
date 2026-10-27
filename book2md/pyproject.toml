@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textbook-pipe"
-version = "0.0.1"
+version = "0.2.0"
 description = "教材 PDF → md+图片+公式 → 双版本单体 HTML 的独立转换工具"
 requires-python = ">=3.13"
 dependencies = []

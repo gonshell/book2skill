@@ -3,6 +3,47 @@
 格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)；
 版本号遵循语义化版本（SemVer）。验收结论与欠账台账见 [AGENT.md](AGENT.md)。
 
+## [0.2.0] - 2026-10-27
+
+首个全实测锚点版本：五册系统级通测 + 网关实抽/基准回归实测 + 化学书（首本非数学
+教材）端到端 + 技能壳联调。详见 AGENT.md 验收表与工作区《待确定事项台账.md》。
+
+### Added
+- 系统级 `tbp run` 通测（阶段 A-5）：五册端到端六门全绿，markdown / images /
+  双版 HTML 与已验收 final 逐字节一致；run 补生 page_map.md（13986c1）
+- 技能壳（P2 / 阶段 C）：`SKILL.md` + 四脚本（precheck / verify_delivery /
+  adjudicate_sheet / overlay_scaffold），stdout JSON 信封，退出码 0/10/20/30/40/50；
+  `tbp convert` 与 `onboard+run` 产物逐字节相同（链路确定性实证）
+- S16 结构性损坏公式降级通道：嵌套 textcircled / 空 array 无限嵌套等不可还原形态
+  → 占位 + `broken_formulas.tsv` 人工补录清单（C 档）
+- baseline 测量口径对等：`_measure` 按实际引用带图（杜绝 D10/缺图假阳性）；
+  run 侧重抽产物过同一套 S1–S20 再比对（杜绝规则可修复形态假漂移）
+- baseline init 抽样三级优先：`baseline.pages` 显式页列表 > `baseline.blocks:"all"`
+  （按账本抽取块全覆盖，免手填页码）> 默认首/中/尾各 2 页
+- `collect_fingerprint` 实测填充：版本取 GET `/v1/health`（官方 mineru-kit 无
+  `/version`，实测 4.0.12）；未配置端点/探活失败仍一律 None（纪律不变）
+- 测试扩至 **67 例** + 5 套行为保持对账：S16/行内标签 13 例、baseline 测量口径 2 例、
+  指纹与抽样 11 例、技能壳脚本用例（真实交付布局）
+
+### Changed
+- merge：HTML 表格 `src="images/page_N_"` 引用随块偏移同步改写（此前只改 markdown
+  引用；化学书 32 引用 0 缺失）
+- render：`prose_inline` 转义白名单放行原生 `<sup>/<sub>/<u>`（正文与表格单元格
+  两路径；带属性标签与 `$a<b$` 仍转义）——修复化学书 74 处上下标被打露
+- rules：S16 附带安全修复（`\;` 拆散数字如 `1.414\;3→1.4143`、裸 `^` 无基底）；
+  隔离目标同名冲突改 `-dup` 唯一命名
+- `detectors.run` 增返 `details`（命中串含行号）；`_issues.collect` 填 line/excerpt
+  并读 `broken_formulas.tsv` 生成 C 档条目（复核表不再空表）
+- 行为保持对账引入**已声明改动白名单**：B4 引擎修复使数学书产物相对历史 final 有
+  9 行有意差异（rules 5 行 + merge 4 行），逐行登记
+  `tests/fixtures/parity_delta_allowlist.json`；除登记项外任何差异仍判失败
+
+### Fixed
+- 技能壳四断点（联调实测）：precheck 端点误传参恒判未配置 + 探活改 `/v1/health`；
+  verify_delivery HTML 路径对齐真实布局 `out/<book>/html|kb_html/`；C 档复核表
+  数据源断链（`broken_formulas.tsv` 跨行原串按行首序号切分）
+- `pyproject.toml` version 0.0.1 → 0.2.0（v0.1.0 打 tag 时漏改）
+
 ## [未发布]
 
 ### Added
