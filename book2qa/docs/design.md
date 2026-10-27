@@ -1,8 +1,9 @@
-# design.md — book2qa 设计（v1 草案）
+# design.md — book2qa 模块设计
 
 > 模块定位、能力边界、五个 skill 的职责划分与数据流。
-> 配套契约见 [graph-spec.md](graph-spec.md)；质量判定见 [quality.md](quality.md)（待写）。
-> 2026-10-27 起草，试点册：人教A版数学必修第一册。
+> 配套契约见 [graph-spec.md](graph-spec.md)（骨架已冻结）；质量判定见 [quality.md](quality.md)（待写）。
+> 2026-10-27 起草，同日按用户裁定补：粒度三层判据、§10 标题四分类、`exercises` 题目层、骨架冻结口径。
+> 试点册：人教A版数学必修第一册。
 
 ---
 
@@ -121,14 +122,23 @@ book2md 产物（markdown.md + images/ + page_map.md）
 
 ```
 解析 markdown.md（标题重建，见 graph-spec §10）
-  → 拆分知识点 → 挂原文锚点 / 图 / 公式（含 plain 文本化）
+  → 拆分知识点 → 挂原文锚点 / 题目 / 图 / 公式（含 plain 文本化）
   → 生成前置关系（同节顺序 + 跨节规则 + 人工补）
   → 质量闸（公式可渲染 / 图存在 / 原文可溯 / 损坏公式标 unverified）
   → 输出 graph.jsonl + figures.json + build_report.md（待人工确认清单）
 ```
 
+分四段执行，**前两段与人的裁决无关**，可先写、可先测：
+
+| 段 | 命令 | 产出 | 是否需人 |
+|---|---|---|---|
+| L0 结构 | `b2q build --stage=structure` | `structure.jsonl`（章/节/子节边界 + 行号 + 页区间）、归并清单 | 否 |
+| L1 抽取 | `b2q build --stage=extract` | `exercises.jsonl`、`figures.json`、公式双轨 | 否 |
+| L2 候选 | `b2q build --stage=candidates` | `candidates.jsonl`（知识点初稿 + 锚点匹配度 + 粒度越界报警） | **人裁边界与命名** |
+| L3 成图 | `b2q build --stage=graph` | `graph.jsonl`（过质量闸） | 人裁后在环确认 |
+
 **必须人在环**：知识点边界、前置关系由人裁，AI 只出初稿。`build_report.md` 里
-列出所有"AI 拿不准"的项目（标题歧义、锚点匹配度低、图号未找到）。
+列出所有"AI 拿不准"的项目（标题歧义、锚点匹配度低、图号未找到、粒度过粗/过细）。
 
 ## 6. 技术风险与对策
 
@@ -146,7 +156,7 @@ book2md 产物（markdown.md + images/ + page_map.md）
 
 | 阶段 | 范围 | 验收标准（硬指标） |
 |---|---|---|
-| **S1 建库** | 必修一 → `graph.jsonl` | 节点 70±10；每节点有 `pages` + `anchors`；公式 100% 有 plain；质量报告里 unverified 全部列明 |
+| **S1 建库** | 必修一 → `graph.jsonl` | 节点 75（区间 72–88）；每节点有 `pages` + `anchors`；公式 100% 有 plain；`exercises` 覆盖 ≥90% 的节点且每节点 ≥3 条；类型配额落在 graph-spec §1.2 区间内；质量报告里 unverified 全部列明 |
 | **S2 答疑** | `ask` | 20 个真实学生问题：答得出且**引用页码正确**（人工抽检 10 条）；答不出时如实说不会（零编造） |
 | **S3 练习** | `drill` | 20 道题：判分准确率 ≥95%；错因能定位到具体节点（人工抽检 10 条） |
 | **S4 复习** | `review` | 连续 2 周：到期清单不遗漏、不重复；掌握度变化与人工观察一致 |
@@ -162,7 +172,8 @@ book2md 产物（markdown.md + images/ + page_map.md）
 |---|---|
 | `test_graph_schema` | graph.jsonl 字段完整、id 唯一、prereq 指向存在 |
 | `test_formula_plain` | 文本化规则表逐条（含反例） |
-| `test_build_title` | 标题重建：章/节/子节/固定块/噪音五类 + 章名续行 + 编号缺空格 |
+| `test_build_title` | 标题重建：章/节/子节/提问块四类 + 章名续行 + 编号缺空格 + OCR 污染归并（`da`/`••`/`3思考`） |
+| `test_exercises` | 题目抽取：题号识别、跨页题干、块归属；抽不准的必须进 build_report 而不是被猜 |
 | `test_retrieve` | 真问题 → 命中正确节点（用图形锚点与公式关键词双向验证） |
 | `test_store` | 掌握度更新、错题写入、排程计算（SM-2 边界） |
 | `test_no_hallucination` | 给定教材未涵盖的问题，答复必须含"未涵盖"且不含具体结论 |
