@@ -21,8 +21,11 @@ cd book2md
 pip install -e .          # 需要 Python ≥ 3.13
 b2m --version             # → b2m (book2md) 0.3.2
 b2m config set workspace /path/to/workspace
-b2m config set backend_endpoint http://<网关地址>:8000   # 教材抽取网关（MinerU）
+b2m config set backend_endpoint http://127.0.0.1:8000   # 示例值：网关与客户端同机；跨机换成实际地址
 ```
+
+> 端点没有硬编码进代码，一律由 `B2M_BACKEND_API` 环境变量或 `~/.book2md/config.json`
+> 的 `backend_endpoint` 决定（见 [book2md/docs/backend.md](book2md/docs/backend.md) §1）。
 
 渲染需要系统安装 Node.js ≥ 22；KaTeX 资产随包分发，无需另装。
 完整命令说明见 [book2md/docs/spec-cli.md](book2md/docs/spec-cli.md)，

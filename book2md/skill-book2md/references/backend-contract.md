@@ -5,7 +5,7 @@
 
 ## 端点与调用
 
-- 网关：`http://<网关地址>:8000`（自托管 MinerU 服务；版本**待确定**，探测记录见 backend.md）
+- 网关：`http://127.0.0.1:8000`（自托管 MinerU 服务；版本**待确定**，探测记录见 backend.md）
 - 端点配置优先级：环境变量 `B2M_BACKEND_API` > `b2m config set backend_endpoint`，**禁止硬编码**
 - 健康检查：`GET {endpoint}/version`
 - 解析请求：`POST /v1/file_parse?tier=basic&response_format=zip&wait_timeout=900&page_range=N-M`

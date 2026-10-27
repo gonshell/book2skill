@@ -32,7 +32,7 @@ class CollectFingerprint(unittest.TestCase):
         health = {"status": "ok", "version": "4.0.12",
                   "features": {"output_formats": ["zip"]}}
         with mock.patch.object(mineru, "resolve_api",
-                               return_value="http://<网关地址>:8000"), \
+                               return_value="http://127.0.0.1:8000"), \
                 mock.patch.object(mineru, "_http_get_json", return_value=health):
             fp = mineru.collect_fingerprint()
         self.assertEqual(fp["gateway_version"], "4.0.12")

@@ -102,7 +102,7 @@ b2m config path             # 显示配置文件绝对路径
 |---|---|---|
 | `workspace` | 绝对路径 | 默认工作区（四层解析的第 3 层） |
 | `backend` | `mineru-remote` \| `local-mineru` \| `manual` | 抽取后端，对应 extractors/ 下的适配器 |
-| `backend_endpoint` | URL，如 `http://<网关地址>:8000` | 抽取网关端点（docs/backend.md；端点禁止硬编码，亦可环境变量 `B2M_BACKEND_API` 覆盖） |
+| `backend_endpoint` | URL，如 `http://127.0.0.1:8000` | 抽取网关端点（docs/backend.md；端点禁止硬编码，亦可环境变量 `B2M_BACKEND_API` 覆盖） |
 | `subjects` | 逗号分隔科目 id | 已接入科目，如 `math-renjiao-a,chem-renjiao` |
 
 **处理流程**：`set` 时校验 key 合法 → `workspace` 需可创建（试建目录）→ 写回 JSON
@@ -151,7 +151,7 @@ b2m config path             # 显示配置文件绝对路径
   "schema": "b2m.provenance/v1",
   "source_pdf": {"name": "化学必修第一册.pdf", "sha256": "…"},   // PDF 是唯一事实源，指纹必须含哈希
   "adapter": "mineru-remote",
-  "gateway": {"endpoint": "http://<网关地址>:8000", "tier": "basic"},
+  "gateway": {"endpoint": "http://127.0.0.1:8000", "tier": "basic"},
   "backend": {
     "gateway_version": null,     // 网关未上报 → 显式 null（缺口可见，禁止填占位假值）
     "mineru_version": null,      // 同上；上报后为字符串

@@ -27,7 +27,7 @@
 
 ### 1.1 为什么自托管
 
-教材转换涉及整本书的版权内容，必须保证**数据不出组织**。因此选择 MinerU 开源引擎自托管（内网地址 `<网关地址>:8000`），而非公有云 API。【已核实，见 backend.md §1】
+教材转换涉及整本书的版权内容，必须保证**数据不出组织**。因此选择 MinerU 开源引擎自托管（内网地址 `127.0.0.1:8000`），而非公有云 API。【已核实，见 backend.md §1】
 
 ### 1.2 GPU 硬约束：Pascal 老卡【已核实，Dockerfile.pascal 头部注释 + 2026-10-26 `nvidia-smi` 实测】
 
@@ -328,7 +328,7 @@ python patch5_mineru_image.py
 ### 6.1 解析端点
 
 ```
-GET/POST http://<网关地址>:8000/v1/file_parse
+GET/POST http://127.0.0.1:8000/v1/file_parse
          ?tier=basic&response_format=zip&wait_timeout=900&page_range={s}-{e}
 ```
 
@@ -391,7 +391,7 @@ wrapper 为 **FastAPI**（`title: "MinerU API"`，API 版本 1.0.0），共 19 �
 
 ## 8. 待确认清单（2026-10-26 全部销账）
 
-网关（<网关地址>）恢复后分两轮核实：**远程 API 3 项 + 登录网关机 3 项**，全部完成：
+网关恢复后分两轮核实：**远程 API 3 项 + 登录网关机 3 项**，全部完成：
 
 | # | 待确认项 | 状态 | 核实方式与结论 |
 |---|---|---|---|
@@ -406,10 +406,10 @@ wrapper 为 **FastAPI**（`title: "MinerU API"`，API 版本 1.0.0），共 19 �
 
 ```bash
 # 远程（任意可达网关的机器）
-curl http://<网关地址>:8000/v1/health    # 版本 + 能力
-curl http://<网关地址>:8000/v1/tiers     # 实际可服务档位
-curl http://<网关地址>:8000/v1/usage     # 限额契约
-curl http://<网关地址>:8000/openapi.json # 完整端点面（快照：docs/gateway-openapi-20261026.json）
+curl http://127.0.0.1:8000/v1/health    # 版本 + 能力
+curl http://127.0.0.1:8000/v1/tiers     # 实际可服务档位
+curl http://127.0.0.1:8000/v1/usage     # 限额契约
+curl http://127.0.0.1:8000/openapi.json # 完整端点面（快照：docs/gateway-openapi-20261026.json）
 
 # 网关机宿主机（只读）
 CID=$(docker ps -q --filter publish=8000 | head -1)

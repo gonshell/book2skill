@@ -7,7 +7,7 @@
 
 | 项 | 值 | 说明 |
 |---|---|---|
-| 端点 | `http://<网关地址>:8000` | 内网自托管（形态一），数据不出组织 |
+| 端点 | `http://127.0.0.1:8000`（**示例值**） | 自托管形态（形态一：数据不出组织）。**网关与客户端同机时用此值；跨机部署须替换为网关实际地址**——通过 `b2m config set backend_endpoint <url>` 或环境变量 `B2M_BACKEND_API` 指定，端点禁止硬编码进代码 |
 | 解析端点 | `GET/POST /v1/file_parse` | 整书超时，必须分块提交 |
 | 调用串（实测原文） | `/v1/file_parse?tier=basic&response_format=zip&wait_timeout=900&page_range={s}-{e}` | run_blocks.py L76 |
 | `tier` | `basic`（**锁定**） | OCR 质量档位直接决定 S1–S20 规则适用前提，变更须过基准回归 |
