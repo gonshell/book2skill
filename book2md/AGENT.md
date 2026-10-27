@@ -13,7 +13,7 @@
 遗留：仅 E 人工复核队列（TOC OCR 噪音、2 条损坏公式按 PDF 补录等，故意不自动改写）。
 下一版本候选方向：覆盖层（L2）规则加载机制、更多学科接入。
 
-### 已完成的验收（2026-10-27，`bash run_tests.sh` 一键复现，67 例 + 5 套对账全绿）
+### 已完成的验收（2026-10-27，`bash run_tests.sh` 一键复现，73 例 + 5 套对账全绿）
 
 | 验收项 | 结论 | 复现方式 |
 |---|---|---|
@@ -25,6 +25,8 @@
 | 命令冒烟（extract/onboard/run/baseline 离线全流程） | ✅ 19 例 | 三套 smoke 测试（含 baseline 测量口径对等 2 例） |
 | S16 损坏公式降级 + 行内标签白名单 | ✅ 13 例 | `tests/test_s16_and_inline_tags.py` |
 | 指纹实测填充 + 抽样三级优先 | ✅ 11 例 | `tests/test_fingerprint_and_sampling.py` |
+| 包结构自检（版本交叉校验 / KaTeX 资产随包） | ✅ 4 例 | `tests/test_package_assets.py` |
+| 抽取契约（缺真实样例时自动跳过） | ✅ 8 例（CI 中 skip） | `tests/test_extraction_contract.py` |
 | 技能壳四脚本（真实交付布局） | ✅ 18 例 | `tests/test_skill_scripts.py` |
 | 安装冒烟（wheel 安装 + KaTeX 资产随包 + 渲染端到端） | ✅ | 一次性 venv 已实证并删除 |
 

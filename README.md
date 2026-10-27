@@ -1,5 +1,7 @@
 # book2skill
 
+[![CI](https://github.com/gonshell/book2skill/actions/workflows/ci.yml/badge.svg)](https://github.com/gonshell/book2skill/actions/workflows/ci.yml)
+
 教材 → 教学能力的工具集合。每个子目录是一个自包含模块（独立 Python 包、独立 CLI、
 独立测试与技能壳），彼此不共享运行时代码。
 
@@ -39,7 +41,7 @@ b2m config set backend_endpoint http://127.0.0.1:8000   # 示例值：网关与�
 
 ```bash
 cd book2md
-bash run_tests.sh                                      # 69 例，纯本地，约 1 分钟
+bash run_tests.sh                                      # 73 例，纯本地，约 1 分钟
 B2M_PARITY_SOURCE=/path/to/history bash run_tests.sh   # 追加 5 套行为保持对账，约 20 分钟
 ```
 
