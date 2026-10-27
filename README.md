@@ -7,7 +7,7 @@
 
 | 目录 | 名称 | 职责 | 版本 |
 |---|---|---|---|
-| [`book2md/`](book2md/) | **book2md** | 教材 PDF → Markdown + 图片 + 公式 → 双版本单体 HTML（阅读版 / 知识库版） | v0.3.1 |
+| [`book2md/`](book2md/) | **book2md** | 教材 PDF → Markdown + 图片 + 公式 → 双版本单体 HTML（阅读版 / 知识库版） | v0.3.2 |
 
 `book2md` 的前身是 `textbook-pipe`（2026-10-27 更名并迁入本仓库）。它的历史记录
 （CHANGELOG 0.1.0/0.2.0、QA 台账销项过程）保留原名，见
@@ -19,7 +19,7 @@
 git clone <本仓库>
 cd book2md
 pip install -e .          # 需要 Python ≥ 3.13
-b2m --version             # → b2m (book2md) 0.3.1
+b2m --version             # → b2m (book2md) 0.3.2
 b2m config set workspace /path/to/workspace
 b2m config set backend_endpoint http://<网关地址>:8000   # 教材抽取网关（MinerU）
 ```
@@ -27,6 +27,10 @@ b2m config set backend_endpoint http://<网关地址>:8000   # 教材抽取网�
 渲染需要系统安装 Node.js ≥ 22；KaTeX 资产随包分发，无需另装。
 完整命令说明见 [book2md/docs/spec-cli.md](book2md/docs/spec-cli.md)，
 网关部署见 [book2md/docs/mineru-selfhost.md](book2md/docs/mineru-selfhost.md)。
+
+> ⚠️ 在**本仓库根目录**执行 `python -m book2md.cli` 会失败——根下的 `book2md/`
+> 目录名与包名相同，Python 会先把它当 namespace package。用 `b2m` 命令即可（不受
+> 工作目录影响），或先 `cd book2md` 再用 `python -m book2md.cli`。
 
 ## 测试
 
