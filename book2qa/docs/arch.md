@@ -189,7 +189,8 @@ b2q log     --event <ask|attempt|learn_progress|review_done> --node <id> [...]
 ```
 
 读侧命令是 **skill 唯一的数据入口**：模型不读 `markdown.md`、不算页码、不判归属。
-`recall` 在内存里现建索引（75 节点 + 约千段段落，毫秒级），不依赖 `index/` 落盘缓存。
+`recall` 的 BM25 内存现建（毫秒级）；向量路（R4）读 `data/index/` 落盘索引
+（S2 由 `b2q index` 建，见 serving.md §1），索引缺失/过期时自动降级三路。
 
 | 退出码 | 语义 |
 |---|---|
@@ -224,10 +225,9 @@ graph-spec §3 把 `pages` 列为**必填**，但 `page_map.md` 缺行时算不�
 
 ### 9.3 `data/index/` 是否 v1 就建
 
-design.md 的数据流画了 `index/`，但检索是 `ask` 阶段（S2）才需要。
-**v1 不落盘**：`recall` 在内存里对 75 个节点 + 约千段段落现建 BM25（毫秒级），
-`index/` 只在"启动耗时成为问题"时才作为缓存落盘。这样 build 不必背检索的复杂度，
-而读侧命令已经能用（见 skill-io.md）。
+**S1 不建**：build 到 graph 为止，不背检索复杂度。**S2 由 `b2q index` 落盘建**——
+向量索引（.npy + jsonl，约 6 MB）是缓存不是事实源，可随时全量重建；
+BM25 仍内存现建。最终口径见 serving.md §1–§2。
 
 ## 10. 明确不做的事
 
