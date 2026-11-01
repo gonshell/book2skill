@@ -12,13 +12,17 @@ from dataclasses import dataclass, field, replace
 from book2qa.paths import data_dir
 
 # 真实格式：<!-- ===== 原书物理页 7-46 · 教材页码 None-39 ===== -->
-# 教材页码起点可为 None（前置零页无教材页码）
+# 「教材页码」段可选（RV-C2：上游条件追加，下游不得强制匹配静默丢页）
 PAGE_MARK_RE = re.compile(
-    r"<!--\s*=+\s*原书物理页\s*(\d+)-(\d+)\s*·\s*教材页码\s*(\S+?)-(\S+?)\s*=+\s*-->")
+    r"<!--\s*=+\s*原书物理页\s*(\d+)-(\d+)"
+    r"(?:\s*·\s*教材页码\s*(\S+?)-(\S+?))?\s*=+\s*-->")
+PAGE_MARK_LOOSE = re.compile(r"原书物理页\s*\d+-\d+")
 IMAGE_RE = re.compile(r"page_(\d+)")
 
 
 def _int_or_none(s):
+    if s is None:
+        return None
     s = s.strip()
     return int(s) if s.isdigit() else None
 
@@ -77,8 +81,17 @@ def parse_page_marks(text):
                 idx=len(marks), line_no=i,
                 phys_start=int(m.group(1)), phys_end=int(m.group(2)),
                 tb_start=_int_or_none(m.group(3)), tb_end=_int_or_none(m.group(4))))
+    # 兜底：含「原书物理页」但主正则不匹配的行必须留痕，不得静默丢页（RV-C2）
+    issues = []
+    for i, ln in enumerate(lines, 1):
+        if PAGE_MARK_LOOSE.search(ln) and not PAGE_MARK_RE.search(ln):
+            issues.append({"code": "page_mark_unparsed", "line": i,
+                           "detail": "页界标记格式未识别（教材页码段异常？）：%s"
+                                     % ln.strip()[:60]})
     if not marks:
-        return [], ["page_marks_absent"]
+        issues.append({"code": "page_marks_absent",
+                       "detail": "全文无有效页界标记"})
+        return [], issues
 
     mark_at = {mk.line_no: mk for mk in marks}
     imgs_by_block = {-1: []}
@@ -99,7 +112,6 @@ def parse_page_marks(text):
                          imgs[0] - mk.phys_start if imgs else None,
                          imgs[-1] - mk.phys_end if imgs else None)
 
-    issues = []
     # 不变量（必修一实测）：每块恰占固定数量 PDF 页，块间 PDF 页连续等差 →
     # offset_k = offset_0 + (phys_start_k − phys_start_0)。
     # 首块偏移取自身候选（lo==hi 唯一；歧义取尾对齐并留痕）。

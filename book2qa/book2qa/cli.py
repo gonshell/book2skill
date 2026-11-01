@@ -32,12 +32,17 @@ def build_parser():
                     choices=["structure", "extract", "candidates", "graph"])
     sp.add_argument("--source-root", help="book2md 产物根（覆盖三层解析）")
     sp.add_argument("--force", action="store_true", help="忽略已有产物重算")
+    # RV-Q2：子命令级 --workspace，允许后置（b2q build ... --workspace P）
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("build").execute(a, t0))
 
     sp = sub.add_parser("config", help="用户配置管理（~/.book2qa/config.json）")
     sp.add_argument("action", choices=["get", "set", "path"])
     sp.add_argument("key", nargs="?", help="workspace | source_root")
     sp.add_argument("value", nargs="?", help="set 时的值")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("config").execute(a, t0))
 
     return p

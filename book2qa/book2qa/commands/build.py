@@ -29,7 +29,9 @@ def execute(args, t0):
                     error="book2md 产物根未配置或目录不存在：source_root=%r"
                           % (source_root,), t0=t0)
     files = paths.book_files(source_root, book)
-    missing = [k for k, v in files.items() if k != "images_dir" and not os.path.isfile(v)]
+    # page_map 可选（RV-C1：上游合法地不产；缺失降级报 issue，不整册拒收）
+    missing = [k for k, v in files.items()
+               if k not in ("images_dir", "page_map") and not os.path.isfile(v)]
     if missing:
         return emit("build", EXIT_MISSING, workspace=workspace, book=book,
                     error="缺少 book2md 产物：%s（%s）" % (missing, files["markdown"]),
@@ -50,7 +52,7 @@ def _stage_graph(args, workspace, files, t0):
     data_dir = paths.data_dir(workspace)
     cands = source._load_jsonl(os.path.join(data_dir, "candidates.jsonl"))
     ex_rows = source._load_jsonl(os.path.join(data_dir, "exercises.jsonl"))
-    fig_rows = source._load_jsonl(os.path.join(data_dir, "figures.json"))
+    fig_rows = source._load_jsonl(os.path.join(data_dir, "figures.jsonl"))
     if not cands or not ex_rows:
         return emit("build", EXIT_MISSING, workspace=workspace, book=args.book,
                     error="缺少前序产物——请先跑 structure/extract/candidates",
@@ -129,7 +131,11 @@ def _stage_structure(args, workspace, files, t0):
     text = source.read_markdown(files["markdown"])
     page_marks, pm_issues = source.parse_page_marks(text)
     page_map = source.parse_page_map(files["page_map"])
-    if not page_map:
+    if not os.path.isfile(files["page_map"]):
+        pm_issues = pm_issues + [{"code": "pages_missing",
+                                  "detail": "page_map.md 缺失（上游合法可选），"
+                                            "教材页码降级为 None，节点将强制 unverified"}]
+    elif not page_map:
         pm_issues = pm_issues + [{"code": "page_map_empty",
                                   "detail": "page_map.md 无有效映射行：%s"
                                             % files["page_map"]}]
@@ -171,7 +177,9 @@ def _stage_extract(args, workspace, files, t0):
     with open(os.path.join(out_dir, "exercises.jsonl"), "w", encoding="utf-8") as f:
         for r in ex_rows:
             f.write(exercises.to_json_line(r) + "\n")
-    with open(os.path.join(out_dir, "figures.json"), "w", encoding="utf-8") as f:
+    # figures.jsonl（RV-C5：扩展名与实际 JSONL 格式一致，json.load 不再误用）
+    fig_path = os.path.join(out_dir, "figures.jsonl")
+    with open(fig_path, "w", encoding="utf-8") as f:
         for r in fig_rows:
             f.write(figures.to_json_line(r) + "\n")
 
@@ -183,7 +191,7 @@ def _stage_extract(args, workspace, files, t0):
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
                 out_dir=out_dir,
                 artifacts={"exercises": os.path.join(out_dir, "exercises.jsonl"),
-                           "figures": os.path.join(out_dir, "figures.json"),
+                           "figures": fig_path,
                            "build_report": report_path},
                 issues=issues, t0=t0,
                 extra={"exercises": len(ex_rows), "figures": len(fig_rows)})
