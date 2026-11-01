@@ -24,9 +24,6 @@ def execute(args, t0):
     if args.stage not in _STAGES:  # argparse choices 已挡，防御性保留
         return emit("build", EXIT_USAGE, workspace=workspace, book=book,
                     error="未知 stage：%s" % args.stage, t0=t0)
-    if args.stage == "graph":
-        return emit("build", EXIT_USAGE, workspace=workspace, book=book,
-                    error="stage=graph 尚未实现（S1-4）", t0=t0)
     if not source_root or not os.path.isdir(paths.book_dir(source_root, book)):
         return emit("build", EXIT_MISSING, workspace=workspace, book=book,
                     error="book2md 产物根未配置或目录不存在：source_root=%r"
@@ -42,7 +39,53 @@ def execute(args, t0):
         return _stage_structure(args, workspace, files, t0)
     if args.stage == "candidates":
         return _stage_candidates(args, workspace, files, t0)
+    if args.stage == "graph":
+        return _stage_graph(args, workspace, files, t0)
     return _stage_extract(args, workspace, files, t0)
+
+
+def _stage_graph(args, workspace, files, t0):
+    import datetime
+    from book2qa import graph as graph_mod, report as report_mod, source
+    data_dir = paths.data_dir(workspace)
+    cands = source._load_jsonl(os.path.join(data_dir, "candidates.jsonl"))
+    ex_rows = source._load_jsonl(os.path.join(data_dir, "exercises.jsonl"))
+    fig_rows = source._load_jsonl(os.path.join(data_dir, "figures.json"))
+    if not cands or not ex_rows:
+        return emit("build", EXIT_MISSING, workspace=workspace, book=args.book,
+                    error="缺少前序产物——请先跑 structure/extract/candidates",
+                    t0=t0)
+    markdown_text = source.read_markdown(files["markdown"])
+
+    prereq = graph_mod.generate_prereq(cands)
+    gate_pass, issues = graph_mod.quality_gate(cands, markdown_text,
+                                               ex_rows, fig_rows)
+    if not gate_pass:
+        report_path = report_mod.write_report(workspace, issues,
+                                              {"册": args.book, "质量闸": "未通过"})
+        return emit("build", EXIT_GATE_FAIL, workspace=workspace, book=args.book,
+                    out_dir=data_dir,
+                    artifacts={"build_report": report_path},
+                    issues=issues, t0=t0,
+                    error="质量闸未通过，graph.jsonl 不落盘")
+    rows = graph_mod.build_graph(cands, prereq, issues)
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    for r in rows:
+        if r.get("built_by") == "auto" and r.get("status") == "unverified":
+            pass  # 初稿保持 auto/unverified；人工改过的是 auto+review
+        r.setdefault("built_at", now)
+    out = os.path.join(data_dir, "graph.jsonl")
+    with open(out, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(graph_mod.to_json_line(r) + "\n")
+    stats = {"册": args.book, "节点数": len(rows),
+             "prereq 边数": sum(len(r.get("prereq", [])) for r in rows),
+             "unverified": sum(1 for r in rows if r["status"] == "unverified")}
+    report_path = report_mod.write_report(workspace, issues, stats)
+    return emit("build", EXIT_OK, workspace=workspace, book=args.book,
+                out_dir=data_dir,
+                artifacts={"graph": out, "build_report": report_path},
+                issues=issues, t0=t0, extra={"nodes": len(rows), "stats": stats})
 
 
 def _stage_candidates(args, workspace, files, t0):
