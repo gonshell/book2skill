@@ -559,9 +559,11 @@ def run(books=None, variant="reader", source_dir=None, out_dir=None):
         for t in errs[:10]:
             print("   ERR %s → %s" % (t, MATH[t][0][:70]), file=sys.stderr)
         all_errs += [(b, MATH[t][0]) for t in errs]
-        all_missing += [(b, r_) for r_ in MISSING_IMGS]
+        # RV-N12：MISSING_IMGS 元素已含册名 (book, rel)，不得再包一层
+        all_missing += list(MISSING_IMGS)
         MATH.clear()
         MATH_ORDER.clear()
+        MISSING_IMGS.clear()   # RV-N2：跨册/跨调用累积会让计数膨胀、册名错挂
         del doc, rendered
 
     for f in ("_math_in.json", "_math_out.json"):

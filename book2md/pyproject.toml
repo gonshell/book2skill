@@ -14,6 +14,7 @@ b2m = "book2md.cli:main"
 
 [project.optional-dependencies]
 extract = ["pymupdf"]   # 仅本地读 PDF 页数用（远程抽取时不装亦可）
+scan = ["Pillow"]       # D6 水印图检测用；未装则 D6 返回空（不算命中，RV-N1）
 
 [tool.setuptools.packages.find]
 include = ["book2md*"]

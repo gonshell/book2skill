@@ -109,12 +109,16 @@ def d5(md, book):
 
 
 def d6(book):
-    """水印图：内容级检测（需 PIL）"""
+    """水印图：内容级检测（需 PIL）。
+
+    PIL 不可用时返回空（RV-N1：环境缺陷不得伪装成内容缺陷；
+    需要 PIL 时 pip install book2md[scan]）。
+    """
     hits = []
     try:
         from PIL import Image
     except ImportError:
-        return ["PIL 不可用，跳过 D6"]
+        return []
     d = os.path.join(_SRC_DIR, book, "images")
     if not os.path.isdir(d):
         return hits

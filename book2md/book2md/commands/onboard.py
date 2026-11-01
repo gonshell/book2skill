@@ -107,7 +107,10 @@ def execute(args, t0):
     if scan_buf.getvalue():
         sys.stderr.write(scan_buf.getvalue())
     if scan_rc != EXIT_OK:
-        return scan_rc
+        # RV-E1：失败路径也必须出信封（stdout 恒为合法 JSON）
+        return _envelope.emit("onboard", scan_rc, workspace=workspace, book=book,
+                              error="onboard 内 scan 失败（exit %d）" % scan_rc,
+                              t0=t0)
 
     # ⑥ provenance.json（§6.3：指纹必须含 PDF 哈希；网关未上报字段一律 None）
     from book2md.commands import _provenance
