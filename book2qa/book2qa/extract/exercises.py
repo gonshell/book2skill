@@ -86,7 +86,9 @@ def extract(paragraphs, para_meta):
                            "detail": "练习块内无主编号且无开放题：%r" % first[:40]})
             continue
 
-        if kind == "正文":
+        if kind not in EXERCISE_BLOCKS and kind not in ("章末栏目",):
+            # 例题紧跟「思考/观察/探究」等提问块出现（教材结构：思考→例题→练习），
+            # 因此例N 抽取范围 = 除练习五块与章末栏目外的一切内容块。
             em = EXAMPLE_RE.match(text)
             if em:
                 cur = new_row(p, m, "例", int(em.group(1)),
@@ -102,9 +104,8 @@ def extract(paragraphs, para_meta):
             in_ex_block = False
             continue
 
-        # 其他块（思考/探究/章末栏目/标题…）：例题链保持，练习链断
-        if kind not in EXERCISE_BLOCKS and cur is not None \
-                and cur["block_kind"] != "例":
+        # 练习块 / 章末栏目：例题链保持，练习链断
+        if cur is not None and cur["block_kind"] != "例":
             cur = None
             in_ex_block = False
 

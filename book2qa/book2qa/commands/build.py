@@ -83,7 +83,8 @@ def _stage_extract(args, workspace, files, t0):
     out_dir = paths.ensure_data_dir(workspace)
 
     ex_rows, ex_issues = exercises.extract(paragraphs, para_meta)
-    fig_rows, fig_issues = figures.map_figures(text, page_marks, files["images_dir"])
+    fig_rows, fig_issues = figures.map_figures(paragraphs, page_marks,
+                                               files["images_dir"])
     fm_issues = formulas.validate_plain(ex_rows)
 
     with open(os.path.join(out_dir, "exercises.jsonl"), "w", encoding="utf-8") as f:
