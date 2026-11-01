@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+"""b2q build — 四段编排（design.md §5.5）。
+
+structure: 页锚定 + 标题四分类 → data/structure.jsonl
+extract:   题目 + 公式双轨 + 图号 → data/exercises.jsonl / figures.json
+candidates / graph: S1-3 / S1-4 实现（本阶段 EXIT_USAGE）。
+"""
+import os
+import sys
+import time
+
+from book2qa import paths
+from book2qa.envelope import emit
+from book2qa.exit_codes import (EXIT_OK, EXIT_MISSING, EXIT_USAGE)
+
+_STAGES = ("structure", "extract", "candidates", "graph")
+
+
+def execute(args, t0):
+    book = args.book
+    workspace = paths.resolve_workspace(args)
+    source_root = paths.resolve_source_root(args)
+
+    if args.stage not in _STAGES:  # argparse choices 已挡，防御性保留
+        return emit("build", EXIT_USAGE, workspace=workspace, book=book,
+                    error="未知 stage：%s" % args.stage, t0=t0)
+    if args.stage in ("candidates", "graph"):
+        return emit("build", EXIT_USAGE, workspace=workspace, book=book,
+                    error="stage=%s 尚未实现（S1-3/S1-4）" % args.stage, t0=t0)
+    if not source_root or not os.path.isdir(paths.book_dir(source_root, book)):
+        return emit("build", EXIT_MISSING, workspace=workspace, book=book,
+                    error="book2md 产物根未配置或目录不存在：source_root=%r"
+                          % (source_root,), t0=t0)
+    files = paths.book_files(source_root, book)
+    missing = [k for k, v in files.items() if k != "images_dir" and not os.path.isfile(v)]
+    if missing:
+        return emit("build", EXIT_MISSING, workspace=workspace, book=book,
+                    error="缺少 book2md 产物：%s（%s）" % (missing, files["markdown"]),
+                    t0=t0)
+
+    if args.stage == "structure":
+        return _stage_structure(args, workspace, files, t0)
+    return _stage_extract(args, workspace, files, t0)
+
+
+def _stage_structure(args, workspace, files, t0):
+    from book2qa import source, structure
+    text = source.read_markdown(files["markdown"])
+    page_marks = source.parse_page_marks(text)
+    tree, issues = structure.build_tree(text, page_marks)
+    sections = structure.flatten(tree)
+    out = os.path.join(paths.ensure_data_dir(workspace), "structure.jsonl")
+    with open(out, "w", encoding="utf-8") as f:
+        for s in sections:
+            f.write(source.to_json_line(s) + "\n")
+    return emit("build", EXIT_OK, workspace=workspace, book=args.book,
+                out_dir=paths.data_dir(workspace),
+                artifacts={"structure": out},
+                issues=issues, t0=t0,
+                extra={"sections": len(sections)})
+
+
+def _stage_extract(args, workspace, files, t0):
+    from book2qa import source
+    from book2qa.extract import exercises, figures, formulas
+    text = source.read_markdown(files["markdown"])
+    page_marks = source.parse_page_marks(text)
+    sections = source.load_structure(workspace, args.book)
+    out_dir = paths.ensure_data_dir(workspace)
+
+    ex_rows, ex_issues = exercises.extract(text, page_marks, sections)
+    fig_rows, fig_issues = figures.map_figures(text, page_marks, files["images_dir"])
+    fm_issues = formulas.validate_plain(ex_rows)
+
+    for name, rows, dump in (
+        ("exercises", ex_rows, exercises.to_json_line),
+        ("figures", fig_rows, figures.to_json_line),
+    ):
+        with open(os.path.join(out_dir, name + ".jsonl"), "w", encoding="utf-8") as f:
+            for r in rows:
+                f.write(dump(r) + "\n")
+
+    issues = ex_issues + fig_issues + fm_issues
+    return emit("build", EXIT_OK, workspace=workspace, book=args.book,
+                out_dir=out_dir,
+                artifacts={"exercises": os.path.join(out_dir, "exercises.jsonl"),
+                           "figures": os.path.join(out_dir, "figures.json")},
+                issues=issues, t0=t0,
+                extra={"exercises": len(ex_rows), "figures": len(fig_rows)})
+
+
+if __name__ == "__main__":
+    sys.exit(0)

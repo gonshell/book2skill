@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "book2qa"
+version = "0.1.0"
+description = "book2md 产物 → 知识点图谱 → 讲解/练习/复习的学习能力集合"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=1.26",  # 向量内积与索引落盘（serving.md §1）；S1 纯 stdlib 亦不强求版本
+]
+
+[project.scripts]
+b2q = "book2qa.cli:main"
+
+[project.optional-dependencies]
+embed = ["onnxruntime>=1.17"]   # R4 向量路（serving.md §1.2）；不装则降级三路
+
+[tool.setuptools.packages.find]
+include = ["book2qa*"]
