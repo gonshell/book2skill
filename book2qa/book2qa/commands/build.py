@@ -24,9 +24,9 @@ def execute(args, t0):
     if args.stage not in _STAGES:  # argparse choices 已挡，防御性保留
         return emit("build", EXIT_USAGE, workspace=workspace, book=book,
                     error="未知 stage：%s" % args.stage, t0=t0)
-    if args.stage in ("candidates", "graph"):
+    if args.stage == "graph":
         return emit("build", EXIT_USAGE, workspace=workspace, book=book,
-                    error="stage=%s 尚未实现（S1-3/S1-4）" % args.stage, t0=t0)
+                    error="stage=graph 尚未实现（S1-4）", t0=t0)
     if not source_root or not os.path.isdir(paths.book_dir(source_root, book)):
         return emit("build", EXIT_MISSING, workspace=workspace, book=book,
                     error="book2md 产物根未配置或目录不存在：source_root=%r"
@@ -40,7 +40,45 @@ def execute(args, t0):
 
     if args.stage == "structure":
         return _stage_structure(args, workspace, files, t0)
+    if args.stage == "candidates":
+        return _stage_candidates(args, workspace, files, t0)
     return _stage_extract(args, workspace, files, t0)
+
+
+def _stage_candidates(args, workspace, files, t0):
+    import datetime
+    from book2qa import candidate, report as report_mod, source, structure
+    rows = source.load_structure(workspace, args.book)
+    para_meta = source.load_para_meta(workspace, args.book)
+    ex_rows = source._load_jsonl(
+        os.path.join(paths.data_dir(workspace), "exercises.jsonl"))
+    if not rows or not para_meta or not ex_rows:
+        return emit("build", EXIT_MISSING, workspace=workspace, book=args.book,
+                    error="缺少前序产物——请先跑 --stage=structure 与 --stage=extract",
+                    t0=t0)
+    text = source.read_markdown(files["markdown"])
+    page_marks, _ = source.parse_page_marks(text)
+    page_map = source.parse_page_map(files["page_map"])
+    paragraphs = source.split_paragraphs(text, page_marks, page_map)
+
+    cands, issues, quota = candidate.build_candidates(rows, para_meta,
+                                                      paragraphs, ex_rows)
+    now = datetime.datetime.now().isoformat(timespec="seconds")
+    for c in cands:
+        c["built_at"] = now
+    out = os.path.join(paths.ensure_data_dir(workspace), "candidates.jsonl")
+    with open(out, "w", encoding="utf-8") as f:
+        for c in cands:
+            f.write(source.to_json_line(c) + "\n")
+    stats = {"册": args.book, "候选节点数": len(cands),
+             "类型分布": quota.get("type_pct", {}),
+             "合并单元": len(quota.get("merged_units", {}))}
+    report_path = report_mod.write_report(workspace, issues, stats)
+    return emit("build", EXIT_OK, workspace=workspace, book=args.book,
+                out_dir=paths.data_dir(workspace),
+                artifacts={"candidates": out, "build_report": report_path},
+                issues=issues, t0=t0, extra={"candidates": len(cands),
+                                             "quota": quota})
 
 
 def _stage_structure(args, workspace, files, t0):

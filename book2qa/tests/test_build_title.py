@@ -145,8 +145,12 @@ class TestNoiseAndEndMatter(unittest.TestCase):
         self.assertEqual(by_id(rows, "1.1")["block_kinds"].get("章末栏目"), 1)
 
     def test_ch_end_review_problems(self):
-        rows, _ = run_md("## 1.1 集合\n\n## 复习参考题1\n\n题\n")
-        self.assertEqual(by_id(rows, "1.1")["block_kinds"].get("章末栏目"), 1)
+        """复习参考题切出为章级附属行，不归最后一个节。"""
+        rows, _ = run_md("## 第一章集合\n\n## 1.1 集合\n\n正文\n\n## 复习参考题1\n\n题\n")
+        end = [r for r in rows if r["kind"] == "ch_end"]
+        self.assertEqual([e["id"] for e in end], ["第一章-END"])
+        self.assertEqual(end[0]["n_paras"], 1)  # 题段归章末行
+        self.assertIsNone(by_id(rows, "1.1")["block_kinds"].get("章末栏目"))
 
     def test_meta_rows(self):
         rows, _ = run_md("## 第一章集合\n\n## 1.1 集合\n\n正文\n\n## 后记\n\n说明\n")

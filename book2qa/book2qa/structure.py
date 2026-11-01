@@ -152,7 +152,7 @@ def build_tree(paragraphs):
     last_line = max((p.end_line for p in paragraphs), default=0)
 
     rows = []
-    cur_ch = cur_sec = cur_sub = None
+    cur_ch = cur_sec = cur_sub = cur_end = None
     block_kind = "正文"
     front = _new_row("front", "F0", "前置内容")
     used_front = False
@@ -164,7 +164,7 @@ def build_tree(paragraphs):
 
     def target():
         nonlocal used_front
-        t = cur_sub or cur_sec
+        t = cur_sub or cur_sec or cur_end
         if t is None:
             used_front = True
             if front["line_start"] is None:
@@ -183,8 +183,9 @@ def build_tree(paragraphs):
             if kind == "chapter":
                 close(cur_sub, p.start_line - 1)
                 close(cur_sec, p.start_line - 1)
+                close(cur_end, p.start_line - 1)
                 close(cur_ch, p.start_line - 1)
-                cur_sub = cur_sec = None
+                cur_sub = cur_sec = cur_end = None
                 cur_ch = _new_row("chapter", h.num, h.title or "(章名缺失)",
                                   cn=h.cn, line_start=p.start_line)
                 rows.append(cur_ch)
@@ -223,7 +224,8 @@ def build_tree(paragraphs):
             elif kind == "meta":
                 close(cur_sub, p.start_line - 1)
                 close(cur_sec, p.start_line - 1)
-                cur_sub = None
+                close(cur_end, p.start_line - 1)
+                cur_sub = cur_end = None
                 cur_sec = _new_row("meta", "M-" + h.title, h.title,
                                    line_start=p.start_line)
                 rows.append(cur_sec)
@@ -233,8 +235,22 @@ def build_tree(paragraphs):
                 block_kind = h.word
                 _mark(p, "块标题", cur_sub or cur_sec)
             elif kind == "ch_end":
-                block_kind = "章末栏目"
-                _mark(p, "块标题", cur_sub or cur_sec)
+                if "复习参考题" in (h.title or h.word or ""):
+                    # 章末复习参考题：切出为章级附属行，不得算进最后一个子节
+                    close(cur_sub, p.start_line - 1)
+                    close(cur_sec, p.start_line - 1)
+                    cur_sub = cur_sec = None
+                    cur_end = _new_row(
+                        "ch_end", (cur_ch["id"] + "-END") if cur_ch else "END",
+                        h.title or "章末复习参考题",
+                        chapter_id=cur_ch["id"] if cur_ch else None,
+                        line_start=p.start_line)
+                    rows.append(cur_end)
+                    block_kind = "章末栏目"
+                    _mark(p, "块标题", cur_end)
+                else:
+                    block_kind = "章末栏目"
+                    _mark(p, "块标题", cur_sub or cur_sec)
             elif kind in ("item", "minor", "noise"):
                 t = target()
                 t["items"].append({"line": h.line_no, "kind": kind,
@@ -256,6 +272,7 @@ def build_tree(paragraphs):
 
     close(cur_sub, last_line)
     close(cur_sec, last_line)
+    close(cur_end, last_line)
     close(cur_ch, last_line)
     if used_front:
         front["line_end"] = (rows[0]["line_start"] - 1) if rows else last_line
