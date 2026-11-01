@@ -53,39 +53,47 @@ def _stage_structure(args, workspace, files, t0):
                                   "detail": "page_map.md 无有效映射行：%s"
                                             % files["page_map"]}]
     paragraphs = source.split_paragraphs(text, page_marks, page_map)
-    rows, issues = structure.build_tree(paragraphs)
+    rows, para_meta, issues = structure.build_tree(paragraphs)
     out = os.path.join(paths.ensure_data_dir(workspace), "structure.jsonl")
     with open(out, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(source.to_json_line(r) + "\n")
+    meta_out = os.path.join(paths.data_dir(workspace), "para_meta.jsonl")
+    with open(meta_out, "w", encoding="utf-8") as f:
+        for m in para_meta:
+            f.write(source.to_json_line(m) + "\n")
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
                 out_dir=paths.data_dir(workspace),
-                artifacts={"structure": out},
+                artifacts={"structure": out, "para_meta": meta_out},
                 issues=pm_issues + issues, t0=t0,
-                extra={"sections": len(rows)})
+                extra={"sections": len(rows), "paragraphs": len(paragraphs)})
 
 
 def _stage_extract(args, workspace, files, t0):
     from book2qa import source
     from book2qa.extract import exercises, figures, formulas
+    para_meta = source.load_para_meta(workspace, args.book)
+    if not para_meta:
+        return emit("build", EXIT_MISSING, workspace=workspace, book=args.book,
+                    error="缺少 para_meta.jsonl——请先跑 --stage=structure", t0=t0)
     text = source.read_markdown(files["markdown"])
-    page_marks = source.parse_page_marks(text)
-    sections = source.load_structure(workspace, args.book)
+    page_marks, pm_issues = source.parse_page_marks(text)
+    page_map = source.parse_page_map(files["page_map"])
+    paragraphs = source.split_paragraphs(text, page_marks, page_map)
     out_dir = paths.ensure_data_dir(workspace)
 
-    ex_rows, ex_issues = exercises.extract(text, page_marks, sections)
+    ex_rows, ex_issues = exercises.extract(paragraphs, para_meta)
     fig_rows, fig_issues = figures.map_figures(text, page_marks, files["images_dir"])
     fm_issues = formulas.validate_plain(ex_rows)
 
-    for name, rows, dump in (
-        ("exercises", ex_rows, exercises.to_json_line),
-        ("figures", fig_rows, figures.to_json_line),
-    ):
-        with open(os.path.join(out_dir, name + ".jsonl"), "w", encoding="utf-8") as f:
-            for r in rows:
-                f.write(dump(r) + "\n")
+    with open(os.path.join(out_dir, "exercises.jsonl"), "w", encoding="utf-8") as f:
+        for r in ex_rows:
+            f.write(exercises.to_json_line(r) + "\n")
+    with open(os.path.join(out_dir, "figures.json"), "w", encoding="utf-8") as f:
+        for r in fig_rows:
+            f.write(figures.to_json_line(r) + "\n")
 
-    issues = ex_issues + fig_issues + fm_issues
+    issues = pm_issues + ex_issues + fig_issues + fm_issues
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
                 out_dir=out_dir,
                 artifacts={"exercises": os.path.join(out_dir, "exercises.jsonl"),

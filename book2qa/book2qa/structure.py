@@ -122,7 +122,11 @@ def _new_row(kind, rid, title, chapter_id=None, cn=None, parent_id=None,
 
 
 def build_tree(paragraphs):
-    """paragraphs: [source.Paragraph] → (rows, issues)。行序单趟，栈式收口。"""
+    """paragraphs: [source.Paragraph] → (rows, para_meta, issues)。
+
+    para_meta: [{idx, block_kind, owner_id}] 与段落一一对应（S1-2 抽取依赖）。
+    行序单趟，栈式收口。
+    """
     heads = _collect_headings(paragraphs)
 
     # —— 章名续行合并：`## 第五章` 后 ≤3 行内的 minor 标题视为章名 ——
@@ -152,6 +156,11 @@ def build_tree(paragraphs):
     block_kind = "正文"
     front = _new_row("front", "F0", "前置内容")
     used_front = False
+    kinds, owners = {}, {}     # 段落 idx → (block_kind, owner row id)
+
+    def _mark(p, kind, row):
+        kinds[p.idx] = kind
+        owners[p.idx] = row["id"] if row is not None else None
 
     def target():
         nonlocal used_front
@@ -180,6 +189,7 @@ def build_tree(paragraphs):
                                   cn=h.cn, line_start=p.start_line)
                 rows.append(cur_ch)
                 block_kind = "正文"
+                _mark(p, "标题", cur_ch)
             elif kind == "section":
                 close(cur_sub, p.start_line - 1)
                 close(cur_sec, p.start_line - 1)
@@ -195,6 +205,7 @@ def build_tree(paragraphs):
                                    line_start=p.start_line)
                 rows.append(cur_sec)
                 block_kind = "正文"
+                _mark(p, "标题", cur_sec)
             elif kind == "subsection":
                 close(cur_sub, p.start_line - 1)
                 ch_id = cur_ch["id"] if cur_ch else None
@@ -208,6 +219,7 @@ def build_tree(paragraphs):
                                    line_start=p.start_line)
                 rows.append(cur_sub)
                 block_kind = "正文"
+                _mark(p, "标题", cur_sub)
             elif kind == "meta":
                 close(cur_sub, p.start_line - 1)
                 close(cur_sec, p.start_line - 1)
@@ -216,14 +228,18 @@ def build_tree(paragraphs):
                                    line_start=p.start_line)
                 rows.append(cur_sec)
                 block_kind = "正文"
+                _mark(p, "标题", cur_sec)
             elif kind == "prompt":
                 block_kind = h.word
+                _mark(p, "块标题", cur_sub or cur_sec)
             elif kind == "ch_end":
                 block_kind = "章末栏目"
+                _mark(p, "块标题", cur_sub or cur_sec)
             elif kind in ("item", "minor", "noise"):
                 t = target()
                 t["items"].append({"line": h.line_no, "kind": kind,
                                    "title": h.title})
+                _mark(p, kind, t)
             # 标题段的多余行（标题与正文粘连）照常聚合
             if p.end_line > p.start_line:
                 rest = "\n".join(p.text.split("\n")[1:])
@@ -236,6 +252,7 @@ def build_tree(paragraphs):
         t = target()
         _agg(t, p.start_line, p.end_line, p.text, p)
         t["block_kinds"][block_kind] = t["block_kinds"].get(block_kind, 0) + 1
+        _mark(p, block_kind, t)
 
     close(cur_sub, last_line)
     close(cur_sec, last_line)
@@ -251,4 +268,9 @@ def build_tree(paragraphs):
             r["tb"] = None
         if r["line_start"] is None:
             r["line_start"] = r["line_end"]
-    return rows, issues
+
+    # 段落级标注：与 paragraphs 顺序一致（S1-2 抽取按此分组）
+    para_meta = [{"idx": p.idx, "block_kind": kinds.get(p.idx, "正文"),
+                  "owner_id": owners.get(p.idx)}
+                 for p in paragraphs]
+    return rows, para_meta, issues

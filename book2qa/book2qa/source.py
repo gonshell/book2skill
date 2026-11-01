@@ -112,9 +112,11 @@ def parse_page_marks(text):
     elif lo0 == hi0:
         offsets[0] = lo0
     elif lo0 > hi0:
-        offsets[0] = hi0
+        # 基准块歧义：取首对齐（首图视为块首页），后续块按等差推；留痕待查
+        offsets[0] = lo0
         issues.append({"code": "page_offset_ambiguous", "block": 0,
-                       "detail": "首块偏移候选 [%d, %d]，取尾对齐 %d" % (hi0, lo0, hi0)})
+                       "detail": "基准块偏移候选 [%d, %d]，取首对齐 %d，后续块随之等差"
+                                 % (hi0, lo0, lo0)})
     else:
         offsets[0] = None
         issues.append({"code": "page_offset_invalid", "block": 0,
@@ -227,7 +229,15 @@ def split_paragraphs(text, marks, page_map):
 
 def load_structure(workspace, book):
     """读上一步产物 data/structure.jsonl → [dict]。"""
-    path = os.path.join(data_dir(workspace), "structure.jsonl")
+    return _load_jsonl(os.path.join(data_dir(workspace), "structure.jsonl"))
+
+
+def load_para_meta(workspace, book):
+    """读 data/para_meta.jsonl → [dict]。"""
+    return _load_jsonl(os.path.join(data_dir(workspace), "para_meta.jsonl"))
+
+
+def _load_jsonl(path):
     rows = []
     if os.path.isfile(path):
         with open(path, encoding="utf-8") as f:

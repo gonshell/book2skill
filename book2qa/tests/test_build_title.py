@@ -19,7 +19,7 @@ def run_md(md):
         md = "<!-- ===== 原书物理页 7-46 · 教材页码 None-39 ===== -->\n" + md
     marks, mk_issues = source.parse_page_marks(md)
     paras = source.split_paragraphs(md, marks, {})
-    rows, issues = structure.build_tree(paras)
+    rows, para_meta, issues = structure.build_tree(paras)
     return rows, [i for i in mk_issues + issues if i["code"] not in PAGE_CODES]
 
 
@@ -174,7 +174,7 @@ class TestTreeShape(unittest.TestCase):
               "B！[](images/page_131_image_2.jpg)\n")
         marks, _ = source.parse_page_marks(md)
         paras = source.split_paragraphs(md, marks, {47: 40, 86: 79})
-        rows, _ = structure.build_tree(paras)
+        rows, _, _ = structure.build_tree(paras)
         sec = by_id(rows, "3.2")
         self.assertEqual(sec["phys"], [47, 86])
         self.assertEqual(sec["tb"], [40, 79])
@@ -185,7 +185,7 @@ class TestTreeShape(unittest.TestCase):
               "\n## 复习参考题1\n\nD\n\n## 后记\n\nE\n")
         marks, _ = source.parse_page_marks(md)
         paras = source.split_paragraphs(md, marks, {})
-        rows, _ = structure.build_tree(paras)
+        rows, _, _ = structure.build_tree(paras)
         total = sum(r["n_paras"] for r in rows)
         self.assertEqual(total, 5)  # A B C D E 全在
 
@@ -195,7 +195,7 @@ class TestTreeShape(unittest.TestCase):
               "\n## 第二章不等式\n\n## 2.1 等式\n\nC\n")
         marks, _ = source.parse_page_marks(md)
         paras = source.split_paragraphs(md, marks, {})
-        rows, _ = structure.build_tree(paras)
+        rows, _, _ = structure.build_tree(paras)
         chs = [(r["line_start"], r["line_end"]) for r in rows if r["kind"] == "chapter"]
         secs = [(r["line_start"], r["line_end"]) for r in rows if r["kind"] == "section"]
         for (s1, e1), (s2, e2) in zip(chs, chs[1:]):
