@@ -174,6 +174,7 @@ class Issue:                                   # 所有降级的统一载体
 
 ```
 b2q build --book <册名> --stage {structure|extract|candidates|graph} [--workspace P] [--force]
+b2q index --book <册名> [--rebuild]                        # S2：建向量索引（serving.md §2）
 b2q config {get|set} <key> [value]
 b2q --version
 ```
@@ -181,7 +182,8 @@ b2q --version
 **读侧（skill 运行时，见 [skill-io.md](skill-io.md)）**：
 
 ```
-b2q recall  --book <册名> --query "<学生原话>" [--top 3]   # 定位 + 取料，返回候选与原文段落
+b2q recall  --book <册名> --query "<学生原话>" [--top 3] [--scene ask|learn|drill|review]
+                                                           # 定位 + 取料；--scene 定候选池与排序
 b2q node    <节点 id>                                      # 单节点全料
 b2q section --book <册名> --sec <3.2>                      # 该节节点顺序 + 前置
 b2q due     --book <册名> [--limit 5]                      # 复习到期清单

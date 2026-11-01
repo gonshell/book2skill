@@ -19,7 +19,7 @@
 
 | 命令 | 用途 | 谁调 |
 |---|---|---|
-| `b2q recall --book X --query "原话" [--top 3]` | 定位 + 取料 | ask / learn / drill / review |
+| `b2q recall --book X --query "原话" [--top 3] [--scene ask]` | 定位 + 取料；`--scene` 决定候选池与排序侧重（serving.md §4），默认 ask | ask / learn / drill / review |
 | `b2q node <id>` | 取单节点全料 | learn / drill |
 | `b2q section --book X --sec 3.2` | 取某节节点顺序 + 前置 | learn |
 | `b2q due --book X [--limit 5]` | 到期复习清单 | review |

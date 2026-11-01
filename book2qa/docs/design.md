@@ -7,6 +7,7 @@
 > **索引与五场景服务 [serving.md](serving.md)** ·
 > 质量判定 [quality.md](quality.md)（待写）。
 > 2026-10-27 起草，同日按用户裁定补：粒度三层判据、§10 标题四分类、`exercises` 题目层、骨架冻结口径。
+> 2026-11-01 增补：向量层与五场景服务定版（[serving.md](serving.md)），检索口径改为四路。
 > 试点册：人教A版数学必修第一册。
 
 ---
@@ -84,8 +85,8 @@ book2md 产物（markdown.md + images/ + page_map.md）
 ```
 输入（多数不含任何页码/题号）
      → 判问题类型：concept_why 概念追问 | stuck 卡题 | check_work 判自己答案
-                    | method_list 方法清单 | too_broad 范围过宽
-     → 三路并行召回（术语 / 段落 / 结构）+ RRF 融合（见 retrieval.md §3）
+                    | method_list 方法清单 | too_broad 范围过宽 | follow_up 承接
+     → 四路并行召回（术语 / 段落 / 结构 / 向量）+ RRF 融合（见 retrieval.md §3、serving.md §3）
      → 按类型选模板：
         concept_why：直答 → 教材原话 → 若无此条件会怎样（反例）→ 易错点 → 依据
         stuck：     思路 → 步骤 → 易错点 → 依据
@@ -98,7 +99,8 @@ book2md 产物（markdown.md + images/ + page_map.md）
 三点硬约束：
 
 1. **不许把"思路→步骤→易错点→依据"当万能模板**——问"为什么"的人要动机与反例，给他四步解题式等于答非所问。
-2. **全空时回问，但不能问"是第几页"**——学生答不上来；要给 3 个具体切入点（按章聚合）让他选。
+2. **全空时回问，但不能问"是第几页"**——学生答不上来；要给 3 个具体切入点让他选
+   （选项生成三规则与多轮收敛见 retrieval.md §8.2；2 轮仍模糊则降级进 learn 正讲）。
 3. **段落可以命中"提问块"而属于任何节点**（如 P76「思考」），此时依据照写、节点掌握度不计。
 
 ### 5.2 learn
@@ -196,7 +198,10 @@ book2md 产物（markdown.md + images/ + page_map.md）
 
 ## 9. 命名与环境
 
-- 包名 `book2qa`，CLI `b2q`，子命令 `build|ask|learn|drill|review`
-- 环境变量前缀 `B2Q_*`（`B2Q_WORKSPACE` 等）
+- 包名 `book2qa`，CLI `b2q`；写侧子命令 `build|config|index`，读侧子命令
+  `recall|node|section|due|log`（完整规格见 arch.md §8）
+- 环境变量前缀 `B2Q_*`（`B2Q_WORKSPACE`、`B2Q_EMBED` 等）
 - 配置目录 `~/.book2qa/`
-- 依赖：Python ≥3.13；无第三方依赖（检索用标准库实现 BM25，避免为检索引入重量级堆栈）
+- 依赖：Python ≥3.13；BM25 用标准库；`numpy` 必需（向量内积与落盘）；
+  `onnxruntime` + bge 模型（~150 MB）为**可选**依赖——未装则 R4 向量路自动关闭，
+  四路降级三路，接口与 prompt 组装不变（serving.md §1.2）
