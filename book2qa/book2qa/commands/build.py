@@ -46,18 +46,23 @@ def execute(args, t0):
 def _stage_structure(args, workspace, files, t0):
     from book2qa import source, structure
     text = source.read_markdown(files["markdown"])
-    page_marks = source.parse_page_marks(text)
-    tree, issues = structure.build_tree(text, page_marks)
-    sections = structure.flatten(tree)
+    page_marks, pm_issues = source.parse_page_marks(text)
+    page_map = source.parse_page_map(files["page_map"])
+    if not page_map:
+        pm_issues = pm_issues + [{"code": "page_map_empty",
+                                  "detail": "page_map.md 无有效映射行：%s"
+                                            % files["page_map"]}]
+    paragraphs = source.split_paragraphs(text, page_marks, page_map)
+    rows, issues = structure.build_tree(paragraphs)
     out = os.path.join(paths.ensure_data_dir(workspace), "structure.jsonl")
     with open(out, "w", encoding="utf-8") as f:
-        for s in sections:
-            f.write(source.to_json_line(s) + "\n")
+        for r in rows:
+            f.write(source.to_json_line(r) + "\n")
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
                 out_dir=paths.data_dir(workspace),
                 artifacts={"structure": out},
-                issues=issues, t0=t0,
-                extra={"sections": len(sections)})
+                issues=pm_issues + issues, t0=t0,
+                extra={"sections": len(rows)})
 
 
 def _stage_extract(args, workspace, files, t0):
