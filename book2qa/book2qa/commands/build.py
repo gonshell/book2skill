@@ -95,10 +95,15 @@ def _stage_extract(args, workspace, files, t0):
             f.write(figures.to_json_line(r) + "\n")
 
     issues = pm_issues + ex_issues + fig_issues + fm_issues
+    from book2qa import report as report_mod
+    stats = {"册": args.book, "题目总数": len(ex_rows), "图号映射": len(fig_rows),
+             "段落总数": len(paragraphs)}
+    report_path = report_mod.write_report(workspace, issues, stats)
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
                 out_dir=out_dir,
                 artifacts={"exercises": os.path.join(out_dir, "exercises.jsonl"),
-                           "figures": os.path.join(out_dir, "figures.json")},
+                           "figures": os.path.join(out_dir, "figures.json"),
+                           "build_report": report_path},
                 issues=issues, t0=t0,
                 extra={"exercises": len(ex_rows), "figures": len(fig_rows)})
 
