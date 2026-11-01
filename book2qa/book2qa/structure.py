@@ -77,7 +77,7 @@ def classify(text):
     for w in PROMPT_WORDS:
         if cleaned.startswith(w):
             return Heading(0, 0, "prompt", w, None, t, None)
-    if NOISE_RE.match(t):
+    if NOISE_RE.match(t) or re.fullmatch(r"[A-Za-z]{1,3}", t):
         return Heading(0, 0, "noise", None, None, t, None)
     m = ITEM_RE.match(t)
     if m:
@@ -185,7 +185,9 @@ def build_tree(paragraphs):
                 close(cur_sec, p.start_line - 1)
                 cur_sub = None
                 ch_id = cur_ch["id"] if cur_ch else None
-                if cur_ch and h.cn is not None and h.num.split(".")[0] != str(cur_ch["chapter_num"]):
+                sec_ch = int(h.num.split(".")[0])
+                if cur_ch and cur_ch["chapter_num"] is not None \
+                        and sec_ch != cur_ch["chapter_num"]:
                     issues.append({"code": "chapter_section_mismatch", "line": h.line_no,
                                    "detail": "节 %s 与当前章 %s 序号不符"
                                              % (h.num, cur_ch["id"])})
