@@ -1,5 +1,7 @@
 # book2skill
 
+> 顶层系统架构（有哪些系统/服务谁/如何运营）：[docs/system-architecture.md](docs/system-architecture.md)
+
 [![CI](https://github.com/gonshell/book2skill/actions/workflows/ci.yml/badge.svg)](https://github.com/gonshell/book2skill/actions/workflows/ci.yml)
 
 教材 → 教学能力的工具集合。每个子目录是一个自包含模块（独立 Python 包、独立 CLI、
