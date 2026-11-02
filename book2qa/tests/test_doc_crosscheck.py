@@ -28,12 +28,14 @@ class TestFieldCrossCheck(unittest.TestCase):
         self.assertIn("errors", fields)
         self.assertIn("eid", json.dumps(read(PKG, "extract", "exercises.py"),
                                        ensure_ascii=False) or fields)
-        code = "".join(read(PKG, f) for f in
-                       ("candidate.py", "graph.py", "extract", "exercises.py")
-                       if os.path.isfile(os.path.join(PKG, f)))
-        code += read(PKG, "extract", "exercises.py") + read(PKG, "graph.py")
+        code = (read(PKG, "candidate.py") + read(PKG, "graph.py") +
+                read(PKG, "extract", "exercises.py"))
         for f in fields:
-            self.assertIn(f, code, "字段 %r 文档有、实现无" % f)
+            # 断言消息必须截断——否则失败时整份源码进测试输出（token 事故）
+            hit = f in code
+            self.assertTrue(
+                hit,
+                "字段 %r 文档有、实现无（查找范围：candidate/graph/exercises）" % f)
 
     def test_no_two_segment_figure_examples(self):
         for name in ("graph-spec.md", "design.md", "transform.md", "pipeline.md"):
