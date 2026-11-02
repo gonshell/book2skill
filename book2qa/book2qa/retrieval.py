@@ -128,7 +128,7 @@ def r3_structural(query, nodes, exercise_rows):
             s = n.get("section", "")
             if s.startswith(sid):
                 scores[n["id"]] = scores.get(n["id"], 0) + 2.5
-    num = re.search(r"(练习|习题|复习巩固|综合运用|拓广探索|例)\s*\(?\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*\)?\s*题?",
+    num = re.search(r"(练习|习题|复习巩固|综合运用|拓广探索|例)\s*第?\s*\(?\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*\)?\s*题?",
                     query)
     if num:
         tail = num.group(2)
