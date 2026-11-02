@@ -107,7 +107,13 @@ def execute(args, t0):
     # R1 只保留片段强命中（score>=2 即 title/alias 片段出现在 query）；
     # 弱 bigram 底色是噪声源（"一定""函数"命中几十节点），模糊交给 R2 段落
     r1_strong = {k: v for k, v in r1.items() if v >= 2.0}
-    rankings = {"r1": r1_strong, "r3": r3, "r2": r2_owner}
+    # R3 题号分支的 key 是 owner_id，同样映射回 node_id（key 空间统一）
+    r3_nodes = {}
+    for k, v in r3.items():
+        targets = [k] if k in node_by_id else unit_to_nodes.get(k, [])
+        for nid in targets:
+            r3_nodes[nid] = r3_nodes.get(nid, 0.0) + v
+    rankings = {"r1": r1_strong, "r3": r3_nodes, "r2": r2_owner}
     fused = retrieval.rrf(rankings)
 
     ranked = sorted(fused.items(), key=lambda kv: -kv[1])[:TOP_N]
