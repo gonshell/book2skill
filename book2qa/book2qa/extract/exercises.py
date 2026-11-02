@@ -29,6 +29,7 @@ def extract(paragraphs, para_meta):
     cur = None            # 当前开放题
     in_ex_block = False   # 练习块续段开关
     seq = 0
+    eid_seen = {}         # (owner, label) → 出现次数（eid 去重用）
 
     def new_row(p, m, block, num, sub=None, quote=None):
         nonlocal seq
@@ -39,8 +40,16 @@ def extract(paragraphs, para_meta):
         if tb is None:
             issues.append({"code": "exercise_no_page", "seq": seq,
                            "detail": "%s 无教材页（段落未锚定）" % label})
-        row = {"seq": seq, "label": label, "num": num, "sub": sub,
-               "block_kind": block, "owner_id": m["owner_id"] if m else None,
+        owner_id = m["owner_id"] if m else None
+        # eid（RV-Q7）：owner#label 全局唯一；同 owner 内练习链重启会同 label，
+        # 追加出现序号（首次省略），序号由段落顺序决定、同输入必同值
+        eid_key = (owner_id, label)
+        eid_seen[eid_key] = eid_seen.get(eid_key, 0) + 1
+        eid = "%s#%s" % (owner_id, label)
+        if eid_seen[eid_key] > 1:
+            eid += "#%d" % eid_seen[eid_key]
+        row = {"seq": seq, "eid": eid, "label": label, "num": num, "sub": sub,
+               "block_kind": block, "owner_id": owner_id,
                "page": tb, "physical_page": p.physical_page,
                "quote": quote if quote is not None else p.text.strip(),
                "quote_plain": None, "cont": [], "parts": [],

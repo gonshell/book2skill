@@ -14,6 +14,8 @@ id 稳定性（graph-spec §4）：M1-C{ch}-S{b}[A-Z]-K{nn}；nn 由
 import collections
 import re
 
+from book2qa.extract.formulas import extract_math as _extract_math
+
 TEACH_KINDS = ("正文", "思考", "观察", "探究", "归纳", "小结",
                "阅读与思考", "探究与发现", "信息技术应用")
 EXERCISE_KINDS = ("练习", "习题", "复习巩固", "综合运用", "拓广探索")
@@ -208,7 +210,7 @@ def build_candidates(rows, para_meta, paragraphs, exercise_rows):
                 continue
             pages = [p.textbook_page for p in ps if p.textbook_page is not None]
             anchors = _make_anchors(ps)
-            exs = [{"label": e["label"], "page": e["page"],
+            exs = [{"eid": e["eid"], "label": e["label"], "page": e["page"],
                     "quote": e["quote"][:40]}
                    for e in ex_by_owner.get(r["id"], [])]
             title = pt["title"] if pt["title"] != r["title"] else r["title"]
@@ -219,6 +221,18 @@ def build_candidates(rows, para_meta, paragraphs, exercise_rows):
             if n_lines_pt < 15:
                 alarms.append("granularity_undersize")
             ctype = infer_type(title)
+            # formulas（graph-spec §6）：候选内公式双轨，去重取前 5；转换失败不收
+            fmls, seen_lx = [], set()
+            for p in ps:
+                for latex, plain in _extract_math(p.text):
+                    if plain is None or latex in seen_lx:
+                        continue
+                    seen_lx.add(latex)
+                    fmls.append({"latex": "$%s$" % latex, "plain": plain})
+                    if len(fmls) >= 5:
+                        break
+                if len(fmls) >= 5:
+                    break
             cands.append({
                 "id": cid, "title": title, "type": ctype,
                 "book": "必修第一册",
@@ -228,6 +242,9 @@ def build_candidates(rows, para_meta, paragraphs, exercise_rows):
                 "summary": (ps[0].text[:38] + "…") if ps else "",
                 "anchors": anchors,
                 "exercises": exs,
+                "aliases": [],   # RV-C3：v1 空缺，graph 阶段人工补（口语/俗称）
+                "errors": [],    # RV-C4：v1 空缺，graph 阶段人工补（易错点，判分依据）
+                "formulas": fmls,
                 "unit": r["id"],
                 "status": "unverified", "built_by": "auto",
                 "built_at": "",   # 由命令层填

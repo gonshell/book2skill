@@ -16,10 +16,11 @@
 
 | 产物 | 粒度 | 必修一量级 | 谁写 | 谁读 |
 |---|---|---|---|---|
-| `structure.jsonl` | 一行 = 一个**节/子节**（不是知识点） | 约 80–100 行 | 机器 | learn（按节取节点顺序）、ask（节号定位） |
-| `exercises.jsonl` | 一行 = 一道**题** | 约 500–700 行 | 机器抽取 + 人认领 | ask（题号定位）、drill（出原题） |
-| `figures.json` | 一条 = 一个**图号 → 文件** | 约 300 条 | 机器 | 各 skill 插图 |
-| `graph.jsonl` | 一行 = 一个**知识点** ★主产物 | **75 行** | 机器出初稿 + **人裁** | 四个 skill 全部 |
+| `structure.jsonl` | 一行 = 一个**节/子节/章末附属**（不是知识点） | **63 行/册**（必修一实测） | 机器 | learn（按节取节点顺序）、ask（节号定位） |
+| `exercises.jsonl` | 一行 = 一道**题**（含全局唯一 `eid`） | **584 条/册**（必修一实测） | 机器抽取 + 人认领 | ask（题号定位）、drill（出原题） |
+| `figures.jsonl` | 一条 = 一个**图号 → 文件** | **106 条/册**（必修一实测；五册 ×5 估） | 机器 | 各 skill 插图 |
+| `graph.jsonl` | 一行 = 一个**知识点** ★主产物 | **72–88 行** | 机器出初稿 + **人裁** | 四个 skill 全部 |
+| `para_meta.jsonl` | 一行 = 一段（block_kind + owner_id） | **4333 行/册**（必修一实测） | 机器 | structure→extract 段间契约（RV-C8） |
 | `build_report.md` | 人看的待确认清单 | 数十条 | 机器 | 维护者 |
 
 `graph.jsonl` 是唯一的"知识本体"，其余四个都是它的**支撑索引或旁证**。
@@ -35,7 +36,7 @@
         anchors[].quote │       │prereq[]│     │ figures[]
         + physical_page │       │        │     │
                         ▼       │        ▼     ▼
-              markdown.md       │   其他节点  figures.json
+              markdown.md       │   其他节点  figures.jsonl
               （原文，只读）      │   （有向图）   │
                                 │              ▼
                     exercises[] │          images/*.jpg
@@ -61,7 +62,7 @@
    "quote":"你能举出两个特殊值满足 f(1)<f(2)，但函数不单调的例子吗？",
    "section_path":"第三章/3.2/3.2.1/思考","role":"motivation"}],
  "exercises":[{"label":"P77 练习 1","page":77,"quote":"根据下列函数图象，写出函数的单调区间。"}],
- "figures":["图3-5"],
+ "figures":["图3.2-1"],
  "formulas":[{"latex":"$f(x_1)<f(x_2)$","plain":"f(x1)<f(x2)"}],
  "prereq":["M1-C3-S1-K01"],
  "errors":["用两个特殊值代替『任意 x1<x2』判断单调性","忽略区间前提，直接说 f(x) 是增函数"],

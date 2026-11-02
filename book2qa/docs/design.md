@@ -69,12 +69,12 @@ book2md 产物（markdown.md + images/ + page_map.md）
         │
         ▼  build（含标题重建、公式文本化、图号映射、人工确认）
    data/graph.jsonl  ──┬──▶  ask     ──┐
-   data/figures.json  ─┼──▶  learn   ──┤
+   data/figures.jsonl ─┼──▶  learn   ──┤
    data/index/        ─┼──▶  drill   ──┤──▶  data/store.sqlite（掌握度/错题/排程）
    data/context.jsonl ─┘   review   ──┘        多轮对话上下文（最近 N 轮）
 ```
 
-- `graph.jsonl` / `figures.json` / `index/`：**教材侧**，可重建，随书版本走。
+- `graph.jsonl` / `figures.jsonl` / `index/`：**教材侧**，可重建，随书版本走。
 - `store.sqlite`：**学生侧**，只增不重建，含个人数据，绝不外传。
 - `context.jsonl`：多轮对话上下文（默认保留最近 10 轮），支持"那为什么这步是这样"的追问。
 
@@ -141,7 +141,7 @@ book2md 产物（markdown.md + images/ + page_map.md）
   → 拆分知识点 → 挂原文锚点 / 题目 / 图 / 公式（含 plain 文本化）
   → 生成前置关系（同节顺序 + 跨节规则 + 人工补）
   → 质量闸（公式可渲染 / 图存在 / 原文可溯 / 损坏公式标 unverified）
-  → 输出 graph.jsonl + figures.json + build_report.md（待人工确认清单）
+  → 输出 graph.jsonl + figures.jsonl + build_report.md（待人工确认清单）
 ```
 
 分四段执行，**前两段与人的裁决无关**，可先写、可先测：
@@ -149,7 +149,7 @@ book2md 产物（markdown.md + images/ + page_map.md）
 | 段 | 命令 | 产出 | 是否需人 |
 |---|---|---|---|
 | L0 结构 | `b2q build --stage=structure` | `structure.jsonl`（章/节/子节边界 + 行号 + 页区间）、归并清单 | 否 |
-| L1 抽取 | `b2q build --stage=extract` | `exercises.jsonl`、`figures.json`、公式双轨 | 否 |
+| L1 抽取 | `b2q build --stage=extract` | `exercises.jsonl`、`figures.jsonl`、公式双轨 | 否 |
 | L2 候选 | `b2q build --stage=candidates` | `candidates.jsonl`（知识点初稿 + 锚点匹配度 + 粒度越界报警） | **人裁边界与命名** |
 | L3 成图 | `b2q build --stage=graph` | `graph.jsonl`（过质量闸） | 人裁后在环确认 |
 
@@ -165,7 +165,7 @@ book2md 产物（markdown.md + images/ + page_map.md）
 | 章名拆行 | `## 第五章` 与 `## 三角函数` 分两行 | 续行合并规则 |
 | OCR 损坏公式 | 化学书实测 2 条（嵌套 textcircled / 空 array） | 命中 `broken_formulas.tsv` 的节点标 `unverified`，答复必须提示 |
 | 公式检索不到 | `$\sqrt{2}$` 搜不到"根号2" | 公式双轨：latex 显示 / plain 检索（graph-spec §6） |
-| 图号与文件脱节 | 正文说"图3-5"，文件叫 `page_51_image_3.jpg` | build 生成 `figures.json` 建立映射，缺失的进待确认清单 |
+| 图号与文件脱节 | 正文说"图3.2-1"，文件叫 `page_51_image_3.jpg` | build 生成 `figures.jsonl` 建立映射，缺失的进待确认清单 |
 | 定位不准导致编造 | — | 定位失败必须回问，不许用常识补 |
 
 ## 7. 分阶段与验收

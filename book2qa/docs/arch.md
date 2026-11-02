@@ -120,6 +120,7 @@ class FormulaPair:
 
 @dataclass(frozen=True)
 class Issue:                                   # 所有降级的统一载体
+    # ⚠️ code 权威清单 = report.py 的 _CODE_TITLES + 质量闸码，arch 不另立一套（RV-Q3）
     level: Literal["warn","todo"]               # todo = 必须人看
     code: str                                   # 稳定码，如 "pages_missing"
     where: str                                  # 行号或节点 id

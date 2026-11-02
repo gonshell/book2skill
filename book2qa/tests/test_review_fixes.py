@@ -85,5 +85,27 @@ class TestRvC5(unittest.TestCase):
                     json.loads(ln)
 
 
+class TestRvQ7(unittest.TestCase):
+    """eid 全局唯一（label 允许跨章重名）。"""
+
+    def test_eid_unique_on_real_book(self):
+        real = r"C:/Users/xiesh/WorkBuddy/2026-10-18-10-47-49/gzsx-md/final/必修第一册/markdown.md"
+        if not os.path.exists(real):
+            self.skipTest("无真实语料")
+        from book2qa import source, structure
+        from book2qa.extract import exercises
+        text = source.read_markdown(real)
+        marks, _ = source.parse_page_marks(text)
+        pmap = source.parse_page_map(os.path.join(os.path.dirname(real), "page_map.md"))
+        paras = source.split_paragraphs(text, marks, pmap)
+        rows, meta, _ = structure.build_tree(paras)
+        ex_rows, _ = exercises.extract(paras, meta)
+        labels = [e["label"] for e in ex_rows]
+        eids = [e["eid"] for e in ex_rows]
+        self.assertGreater(len(eids), 500)
+        self.assertEqual(len(set(eids)), len(eids))  # eid 全唯一
+        self.assertLess(len(set(labels)), len(labels))  # label 确有重名（前提成立）
+
+
 if __name__ == "__main__":
     unittest.main()

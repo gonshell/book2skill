@@ -87,14 +87,15 @@ data/graph.jsonl
 | `book` | ✅ | string | 册名，与 book2md 产物目录名一致（如 `必修第一册`） |
 | `chapter` | ✅ | string | 章标题原文 |
 | `section` | ✅ | string | 节标题原文（保留原书的编号写法） |
-| `pages` | ✅ | [int, int] | 教材页码区间（**教材页**，非 PDF 物理页）；取自 `page_map.md` |
-| `summary` | ✅ | string | 一句话说明（≤60 字），用于检索与列表展示 |
+| `pages` | ✅ | [int, int] \| null | 教材页码区间（**教材页**）；取自 `page_map.md`。**值可 null**（page_map.md 上游合法可选，arch §9.1 裁定）：缺页报 `graph_no_pages` 且节点强制 `unverified` |
+| `summary` | ✅ | string | 一句话说明（≤60 字），用于检索与列表展示。**产出方 = candidates 阶段**（机器出初稿 + 人改） |
 | `anchors` | ✅ | object[] | 原文锚点，见 §5。至少 1 条 |
-| `exercises` | ⬜ | object[] | 教材题目索引，见 §5.1。**`ask` 的「P76 第 3 题」与 `drill` 的「教材原题」依赖它** |
-| `figures` | ⬜ | string[] | 关联图号（如 `图3-5`），须在 `figures.json` 中可解析 |
+| `exercises` | ⬜ | object[] | 教材题目索引（含全局唯一 `eid`），见 §5.1。**`ask` 的「P76 第 3 题」与 `drill` 的「教材原题」依赖它** |
+| `aliases` | ⬜ | string[] | 口语/俗称/旧称别名（如「增减性」→ 单调性）。产出方 = build 后期从节标题+题干抽取 + 人工补；R1 术语召回依赖（retrieval §3）。v1 允许空缺 |
+| `figures` | ⬜ | string[] | 关联图号（三段式 `图3.2-1`），须在 `figures.jsonl` 中可解析 |
 | `formulas` | ⬜ | object[] | 关键公式，见 §6 |
 | `prereq` | ⬜ | string[] | 前置知识点 id（无前置则缺省，不写空数组） |
-| `errors` | ⬜ | string[] | 常见错误（一句一条），供 drill 的错因分析使用 |
+| `errors` | ⬜ | string[] | 常见错误（一句一条），供 drill 错因分析、check_work 模板、R1 加权。**产出方 = graph 阶段人工 + 后续规则**；v1 允许空缺 |
 | `status` | ✅ | enum | `verified` 已人工核对 / `unverified` 内容存疑（见 §7） |
 | `built_at` | ✅ | string | ISO8601，建库时间 |
 | `built_by` | ✅ | string | `manual` 人工录入 / `auto` 规则生成 / `auto+review` 生成后人工改过 |
@@ -120,12 +121,17 @@ M1-C3-S2-K04
 ## 5. 锚点（anchors）
 
 ```json
-{"physical_page": 76, "quote": "一般地，设函数 f(x) 的定义域为 I……", "section_path": "第三章/3.2.1/单调性的定义", "role": "definition"}
+{"physical_page": 83, "quote": "一般地，设函数 f(x) 的定义域为 I……", "section_path": "第三章/3.2.1/单调性的定义", "role": "definition"}
 ```
 
 | 字段 | 说明 |
 |---|---|
-| `physical_page` | PDF 物理页，用于从 book2md 产物反查（`markdown.md` 的页界标记按它分段） |
+| `physical_page` | **物理页**（印刷页序），用于从 book2md 产物反查（`markdown.md` 的页界标记按它分段） |
+
+> **术语表**（RV-C7 消歧，全文档统一）：**物理页** = 书印刷页序（page_map 第一列）；
+> **PDF 页** = 扫描文件页序（图片文件名 `page_N` 的 N）；**教材页** = 书页脚印刷页码
+> （page_map 第二列）。三者换算：物理页 = PDF 页 − 块偏移；教材页 = page_map[物理页]。
+> anchors 与节点 `pages` 存**教材页**。|
 | `quote` | 原文摘录（20–120 字），**唯一可靠的重定位依据** |
 | `section_path` | 章/节/子节路径，便于人眼核对 |
 | `role` | 可选：`definition` 定义段 / `motivation` 动机或追问段 / `warning` 注意事项 / `example` 例题 |
@@ -268,6 +274,17 @@ v1 初期草案漏了题目层，而 `ask` 的三大入口之一是「P76 第 3 
 | 提问块 | 思考 / 观察 / 探究 / 归纳 / 练习 / 习题 / 复习巩固 / 综合运用 / 拓广探索 / 阅读与思考（允许前后缀数字与空格） | **保留正文内容，不开节点、不作节边界** |
 
 四类必须覆盖全部 `##`：正则全都落空时按提问块处理（宁可多并正文，不许静默丢弃）。
+
+**kind 枚举（以实现为准，2026-11-02 回写）**：`Heading.kind` ∈
+`chapter / section / subsection / prompt / ch_end / item / noise / minor / meta`（9 值）。
+- `item`：栏内编号标题（`## 1. 周期性`、`## 1. 选择题`）——不切边界，留作候选拆分线索；
+- `minor`：无编号小标题（`## 补集`）——同 item 处理；
+- `noise`：符号/短字母噪音（`## • •`、`## da`）——记入 items，内容不丢；
+- `meta`：后记、索引——独立结构行。
+
+**章末行为**：`复习参考题N` 切出**章级附属行** `C{n}-END`（kind=ch_end），
+其段落与题目不归最后一个子节——防止章末内容污染节统计与候选（必修一实测抓到
+「选择题」伪候选）。章末题目供 drill 全册使用，不出知识点候选。
 
 > 早期草案把"噪音"列为第五类并允许丢弃，与固定块里的「思考」自相矛盾
 > （同一个 `## 思考` 既是固定块又是噪音），且丢弃等于静默丢内容。已改为四类 + 归并。

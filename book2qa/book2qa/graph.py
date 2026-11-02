@@ -67,6 +67,7 @@ def quality_gate(cands, markdown_text, exercise_rows, figures_rows):
         issues.append({"code": "graph_duplicate_id", "detail": "id 重复：%s"
                                                                  % sorted(dup)[:5]})
 
+    ex_eids = {e.get("eid") for e in exercise_rows}
     ex_labels = {e["label"] for e in exercise_rows}
     fig_set = {f["fig"] for f in figures_rows}
 
@@ -104,7 +105,12 @@ def quality_gate(cands, markdown_text, exercise_rows, figures_rows):
                 c["status"] = "unverified"
                 break
         for e in c.get("exercises", []):
-            if e["label"] not in ex_labels:
+            if e.get("eid") is not None:
+                if e["eid"] not in ex_eids:
+                    issues.append({"code": "exercise_label_unknown", "id": cid,
+                                   "detail": "%s 引用题 eid=%s 不存在"
+                                             % (cid, e["eid"])})
+            elif e["label"] not in ex_labels:  # 兼容无 eid 的旧候选
                 issues.append({"code": "exercise_label_unknown", "id": cid,
                                "detail": "%s 引用题 %s 不存在" % (cid, e["label"])})
         for f in c.get("figures", []) or []:

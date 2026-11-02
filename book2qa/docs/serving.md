@@ -14,15 +14,15 @@
 | 方案 | 判断 |
 |---|---|
 | Milvus / Qdrant / FAISS 服务 | ❌ 单册 4000 条向量，装服务是给自己找运维活 |
-| **numpy 暴力内积** | ✅ 4000 × 384 维 × float32 ≈ **6 MB**，全量内积 <1 ms，唯一依赖 numpy |
+| **numpy 暴力内积** | ✅ 4000 × 512 维 × float32 ≈ **8 MB**，全量内积 <1 ms，唯一依赖 numpy |
 
 落盘形态（每册一套，互不混）：
 
 ```
 data/index/
-├── vectors_必修第一册.npy      # 4000×384 float32，已 L2 归一化（内积=余弦）
+├── vectors_必修第一册.npy      # 4000×512 float32，已 L2 归一化（内积=余弦）
 ├── payload_必修第一册.jsonl    # 与 .npy 行号一一对应
-└── meta_必修第一册.json        # {"model":"bge-small-zh-v1.5","dim":384,
+└── meta_必修第一册.json        # {"model":"bge-small-zh-v1.5","dim":512,
                                #  "md_sha256":"…","built_at":"…"}
 ```
 
@@ -37,13 +37,15 @@ data/index/
 
 | 项 | 决定 | 理由 |
 |---|---|---|
-| 模型 | `bge-small-zh-v1.5`（BAAI，MIT 许可） | 中文短文本实测最强的小模型；段落全部 <512 token，384 维够用 |
+| 模型 | `bge-small-zh-v1.5`（BAAI，MIT 许可） | 中文短文本实测最强的小模型；段落全部 <512 token，**512 维** |
 | 权重格式 | ONNX（~100 MB） | 避开 sentence-transformers 拖 PyTorch（~2 GB） |
 | 运行时 | `onnxruntime`（~50 MB），纯 CPU | 单条 query 编码 5–20 ms，满足交互 |
 | base/m3 何时考虑 | 评测集说话 | bge-base 若 Recall@5 提升显著再换，签名不变 |
 
 **降级开关**：`B2Q_EMBED=off` 或模型未下载时，R4 自动关闭，`recall` 照常工作
 （三路）。四个 skill 的 prompt 组装不感知差异——R4 只是多一路候选。
+**三路是正常形态而非故障态**（RV-Q11 口径）：模型分发在 S2 落地时再定，
+文档中的向量维度以 bge-small-zh-v1.5 实际输出 **512 维**为准（此前写 384 系笔误）。
 
 ## 2. 写入：三个池，payload 只存指针
 
