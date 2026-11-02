@@ -37,6 +37,24 @@ def build_parser():
                     help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("build").execute(a, t0))
 
+    sp = sub.add_parser("recall", help="检索：定位 + 取料（ask/learn/drill/review）")
+    sp.add_argument("--book", required=True, help="册名")
+    sp.add_argument("--query", required=True, help="学生原话")
+    sp.add_argument("--top", type=int, default=5)
+    sp.add_argument("--scene", default="ask",
+                    choices=["ask", "learn", "drill", "review"])
+    sp.add_argument("--context", help="上一轮节点 id（follow_up 绑定用）")
+    sp.add_argument("--source-root", help="book2md 产物根（覆盖三层解析）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("recall").execute(a, t0))
+
+    sp = sub.add_parser("node", help="单节点全料")
+    sp.add_argument("node_id", help="知识点 id（M1-C3-S2A-K01）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("node").execute(a, t0))
+
     sp = sub.add_parser("config", help="用户配置管理（~/.book2qa/config.json）")
     sp.add_argument("action", choices=["get", "set", "path"])
     sp.add_argument("key", nargs="?", help="workspace | source_root")
