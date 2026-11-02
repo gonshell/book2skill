@@ -23,7 +23,8 @@ def execute(args, t0):
     if node is None:
         return emit("node", EXIT_MISSING, workspace=workspace,
                     error="节点不存在：%s" % args.node_id, t0=t0)
-    return emit("node", EXIT_OK, workspace=workspace, t0=t0, **{"node": node})
+    return emit("node", EXIT_OK, workspace=workspace, t0=t0,
+                extra={"node": node})
 
 
 if __name__ == "__main__":
