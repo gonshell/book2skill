@@ -91,3 +91,5 @@ GitHub 之外的备份远端。v1 非必需，GitHub 已够用。
 - conda：独立环境 `b2q`（python3.12 + huggingface_hub + onnxruntime），不污染用户 base
 - 端口决策：serve 用 **8100**（盘点：22/53/80/443/3000/3022/5003/6010/6011/6443/8000 已占）
 - 待办衔接：M1a serve 代码就绪后即第 4 步部署
+
+- **serve 部署形态定案（2026-11-03）**：docker 镜像化——Dockerfile 入仓、镜像 tag=git 短 hash、模型与数据走挂载卷不进镜像、服务器本地 build（不上 DockerHub）、回滚=起上一 tag。conda env b2q 保留用于 index 编码与验证

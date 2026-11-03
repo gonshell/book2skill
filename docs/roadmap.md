@@ -14,7 +14,7 @@
 | M1a | `b2q serve`（FastAPI：/recall /node /healthz + API key + 内存索引 + 请求日志） | HTTP 契约测试全绿 | ⏳ |
 | M1b | store（sqlite WAL：account/attempt/mastery/next_due/context）+ /log /due | 学情读写回归全绿 | ⏳ |
 | M1c | R4：`b2q index`（服务器跑）+ recall 接向量路。**前置就绪：bge ONNX 已在服务器（~/book2qa/models/bge-onnx，512 维实测）、conda env b2q 含 onnxruntime、8100 端口空闲** | gold 经 HTTP 评测 **Recall@5 ≥ 80%** | ⏳ |
-| M1d | 部署：172.20.4.209 docker compose + 部署脚本（push→pull→restart）。**SSH 已通（ssh localgpu），模型下载源已验证** | 一条命令起服务 | ⏳ 就绪 |
+| M1d | 部署：**docker 镜像化**（Dockerfile 入仓，镜像 tag=git hash，回滚=起上一 tag；模型/数据走挂载卷不进镜像；服务器本地 build 不上 DockerHub）。**SSH 已通（ssh localgpu），bge ONNX 已就位，端口 8100 已定** | 一条命令起服务 + 回滚演练通过 | ⏳ 就绪 |
 
 交付：v0.2.0 tag + OpenAPI schema。怎么做：本地写 → push → 服务器 pull 重启 → 评测直连 HTTP。
 
