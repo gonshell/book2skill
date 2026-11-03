@@ -42,7 +42,7 @@ fi
 docker build -q -t b2q-serve:$TAG -f book2qa/deploy/Dockerfile .
 cd book2qa/deploy
 [ -f deploy.env ] || { echo "B2Q_API_KEY=\$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" > deploy.env; chmod 600 deploy.env; }
-B2Q_UID=$(id -u) B2Q_GID=$(id -g) BOOK2QA_HOME="\$HDIR" TAG=$TAG docker compose up -d
+B2Q_UID=\$(id -u) B2Q_GID=\$(id -g) BOOK2QA_HOME="\$HDIR" TAG=$TAG docker compose up -d
 REMOTE
 
 echo "== ③ 健康检查（30s 超时 → 回滚）=="
@@ -53,7 +53,7 @@ for i in $(seq 1 15); do
 done
 if [ "$OK" != "1" ]; then
   echo "!! 健康检查失败 → 回滚上一个 tag"
-  ssh "$SERVER" "cd $SHOME/repo/book2qa/deploy && PREV=\$(docker images --format '{{.Tag}}' b2q-serve | grep -v $TAG | head -1) && BOOK2QA_HOME=\"\$HOME/$SHOME\" TAG=\$PREV docker compose up -d"
+  ssh "$SERVER" "cd $SHOME/repo/book2qa/deploy && PREV=\$(docker images --format '{{.Tag}}' b2q-serve | grep -v $TAG | head -1) && B2Q_UID=\$(id -u) B2Q_GID=\$(id -g) BOOK2QA_HOME=\"\$HOME/$SHOME\" TAG=\$PREV docker compose up -d"
   exit 1
 fi
 
