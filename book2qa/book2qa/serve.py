@@ -87,6 +87,72 @@ def create_app():
         rc, env = _call_execute(node_cmd.execute, args)
         return env
 
+    # ── M1b：学情端点（store 语义在 store.py，serve 只做 HTTP 壳）──
+    @app.post("/log")
+    def log(req: Request, body: dict):
+        _auth(req)
+        from book2qa import store
+        account = body.get("account")
+        node_id = body.get("node_id")
+        if not account or not node_id:
+            raise HTTPException(422, "account 与 node_id 必填")
+        conn = store.connect(_ws())
+        try:
+            result = store.log_attempt(
+                conn, account, node_id, eid=body.get("eid"),
+                correct=bool(body.get("correct")), error_type=body.get("error_type"))
+        finally:
+            conn.close()
+        return {"ok": True, "account": account, "node_id": node_id, **result}
+
+    @app.get("/due")
+    def due(req: Request, account: str, limit: int = 5):
+        _auth(req)
+        from book2qa import store
+        conn = store.connect(_ws())
+        try:
+            return {"ok": True, "account": account,
+                    "due": store.get_due(conn, account, limit=limit)}
+        finally:
+            conn.close()
+
+    @app.get("/mastery")
+    def mastery(req: Request, account: str):
+        _auth(req)
+        from book2qa import store
+        conn = store.connect(_ws())
+        try:
+            return {"ok": True, "account": account,
+                    "mastery": store.get_mastery(conn, account)}
+        finally:
+            conn.close()
+
+    @app.put("/context/{context_id}")
+    def put_ctx(context_id: str, req: Request, body: dict):
+        _auth(req)
+        from book2qa import store
+        conn = store.connect(_ws())
+        try:
+            store.put_context(conn, context_id, body.get("account"),
+                              last_node_id=body.get("last_node_id"),
+                              history=body.get("history"))
+        finally:
+            conn.close()
+        return {"ok": True, "context_id": context_id}
+
+    @app.get("/context/{context_id}")
+    def get_ctx(context_id: str, req: Request):
+        _auth(req)
+        from book2qa import store
+        conn = store.connect(_ws())
+        try:
+            ctx = store.get_context(conn, context_id)
+        finally:
+            conn.close()
+        if ctx is None:
+            raise HTTPException(404, "context 不存在")
+        return {"ok": True, **ctx}
+
     return app
 
 
