@@ -30,14 +30,14 @@
 - 裁定辅助（candidates ↔ Excel）、发布工具（含回滚）、巡检脚本、备份 cron
 - **⚠️ 用户介入点：pending-review.md A/B 裁定 → graph 冻结 → index → 发布演练**
 - 验收：制书全流程走通（含一次回滚演练）
-- 交付：ops-runbook.md + v0.3.0
+- 交付：ops-runbook.md + v0.4.0
 
 ## M4 全场景 + 内网试用 ⏸ 等待 M2/M3
 
 - learn/drill/review skill + 邀请码 + context 跨设备
 - 内网试用 3–10 名学生
 - 验收：第一份未命中巡检报告 + 试用反馈
-- 交付：v0.4.0 + 试用报告
+- 交付：v0.5.0 + 试用报告
 
 ## M5 公网与多平台（触发式，不预做） ⏸ 触发条件 = M4 试用验证价值
 
