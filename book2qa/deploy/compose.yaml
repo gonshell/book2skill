@@ -12,10 +12,11 @@ services:
       - ${BOOK2QA_HOME}/backup:/srv/backup
       - ${BOOK2QA_HOME}/src:/srv/src:ro
     environment:
-      - B2Q_API_KEY=${B2Q_API_KEY}
       - B2Q_WORKSPACE=/srv/workspace
       - B2Q_MODELS_DIR=/srv/models/bge-onnx
       - B2Q_SOURCE_ROOT=/srv/src
     env_file:
       - deploy.env
+    # 容器以宿主 xiesg 的 uid 运行——卷内文件读写权限对齐（B2Q_UID/GID 由 deploy.sh 注入）
+    user: "${B2Q_UID}:${B2Q_GID}"
     restart: unless-stopped
