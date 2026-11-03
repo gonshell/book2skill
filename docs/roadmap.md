@@ -11,7 +11,7 @@
 
 | # | 任务 | 验收 | 状态 |
 |---|---|---|---|
-| M1a | `b2q serve`（FastAPI：/recall /node /healthz + API key + 内存索引 + 请求日志） | HTTP 契约测试全绿 | ⏳ |
+| M1a | `b2q serve`（FastAPI：/recall /node /healthz + API key + 内存索引 + 请求日志） | HTTP 契约测试全绿 + uvicorn 冒烟 | ✅ 2026-11-03（121 例全绿） |
 | M1b | store（sqlite WAL：account/attempt/mastery/next_due/context）+ /log /due | 学情读写回归全绿 | ⏳ |
 | M1c | R4：`b2q index`（服务器跑）+ recall 接向量路。**前置就绪：bge ONNX 已在服务器（~/book2qa/models/bge-onnx，512 维实测）、conda env b2q 含 onnxruntime、8100 端口空闲** | gold 经 HTTP 评测 **Recall@5 ≥ 80%** | ⏳ |
 | M1d | 部署：**docker 镜像化，方案已定稿**（infra-server.md「serve Docker 镜像部署方案」：镜像设计/卷/流水线/回滚/文件清单全套）。前置全清：SSH ✓、hub 拉取 ✓（python:3.12-slim 已缓存）、bge ONNX ✓、端口 8100 ✓。产出五文件清单见方案 §6 | 一条命令起服务 + **回滚演练通过** | ⏳ 就绪（等 M1a） |
