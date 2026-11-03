@@ -16,4 +16,6 @@ services:
       - B2Q_DATA_DIR=/app/data
       - B2Q_MODELS_DIR=/app/models
       - B2Q_SOURCE_ROOT=/app/src
+    env_file:
+      - deploy.env
     restart: unless-stopped
