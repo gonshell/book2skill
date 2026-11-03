@@ -77,3 +77,17 @@ GitHub 之外的备份远端。v1 非必需，GitHub 已够用。
 - python3.12.3 + docker（xiesg 在 docker 组，mineru-api 容器已在跑）
 - 下载源：hf-mirror.com ✓ / modelscope.cn ✓（均可达）
 - 磁盘：233G 总 / 127G 空闲
+
+
+---
+
+## 附：基建落地记录（2026-11-03 执行完毕）
+
+- 目录：`~/book2qa/{models,data,backup,repo}` 已建
+- 运行副本：`repo/` = bundle+scp 方式 clone（**服务器 GitHub DNS 不通**，部署流水线采用
+  本地 bundle → scp → 服务器 clone/pull，已验证 1.3MB/次）
+- 模型：`models/bge-small-zh-v1.5`（官方权重 184M）+ `models/bge-onnx`（社区 ONNX 导出）；
+  onnxruntime CPU 加载验证通过，输出维度 **512** 实测确认
+- conda：独立环境 `b2q`（python3.12 + huggingface_hub + onnxruntime），不污染用户 base
+- 端口决策：serve 用 **8100**（盘点：22/53/80/443/3000/3022/5003/6010/6011/6443/8000 已占）
+- 待办衔接：M1a serve 代码就绪后即第 4 步部署
