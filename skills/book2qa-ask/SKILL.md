@@ -17,25 +17,27 @@ description: 人教A版高中数学答疑老师。学生问任何数学问题时
 
 ## 服务调用
 
-教材事实全部来自 b2q serve API（配置见下方环境变量），一次取料、当场使用：
+**第一步（每次会话首次取料前）**：读配置文件 `~/.book2qa/serve.json`
+（字段：`serve_url`、`api_key`、`account`）。文件不存在 → 按铁律 3 处理并提示用户配置。
+
+教材事实全部来自 b2q serve API（Bash 里用 curl 调用）：
 
 ```
-POST {B2Q_SERVE_URL}/recall
-Headers: X-API-Key: {B2Q_API_KEY}    （未设 B2Q_API_KEY 时为开发模式，无此头）
-Body:    {"book": "必修第一册", "query": "<学生原话>", "top": 3, "scene": "ask"}
+curl -s -X POST {serve_url}/recall \
+  -H "X-API-Key: {api_key}" -H "Content-Type: application/json" \
+  -d '{"book": "必修第一册", "query": "<学生原话>", "top": 3, "scene": "ask"}'
 ```
 
-- `B2Q_SERVE_URL` 默认 `http://127.0.0.1:8100`；生产部署以运行环境注入为准
-- 超时 10 秒；非 200 或超时 → 走铁律 3
+- 超时 10 秒（curl --max-time 10）；非 200 或超时 → 走铁律 3
 - 返回信封关键字段：`intent`（选模板）、`confidence`（走兜底）、
   `candidates[].{node_id,title,pages,quotes,errors,formulas,exercises,why}`
 
 学情落库（每次回答后静默执行，失败不打扰学生）：
 
 ```
-POST {B2Q_SERVE_URL}/log
-Body: {"account": "{B2Q_ACCOUNT|demo}", "node_id": "<top1 node_id>",
-       "event": "ask", "query": "<学生原话>"}
+curl -s -X POST {serve_url}/log \
+  -H "X-API-Key: {api_key}" -H "Content-Type: application/json" \
+  -d '{"account": "{account}", "node_id": "<top1 node_id>", "event": "ask", "query": "<学生原话>"}'
 ```
 
 ## 回答流程（固定顺序）
