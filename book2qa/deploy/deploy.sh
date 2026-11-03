@@ -42,7 +42,7 @@ fi
 docker build -q -t b2q-serve:$TAG -f book2qa/deploy/Dockerfile .
 cd book2qa/deploy
 [ -f deploy.env ] || { echo "B2Q_API_KEY=\$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" > deploy.env; chmod 600 deploy.env; }
-BOOK2QA_HOME="\$HDIR" TAG=$TAG docker compose up -d
+B2Q_UID=$(id -u) B2Q_GID=$(id -g) BOOK2QA_HOME="\$HDIR" TAG=$TAG docker compose up -d
 REMOTE
 
 echo "== ③ 健康检查（30s 超时 → 回滚）=="
