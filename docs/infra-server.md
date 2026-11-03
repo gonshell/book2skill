@@ -93,3 +93,78 @@ GitHub 之外的备份远端。v1 非必需，GitHub 已够用。
 - 待办衔接：M1a serve 代码就绪后即第 4 步部署
 
 - **serve 部署形态定案（2026-11-03）**：docker 镜像化——Dockerfile 入仓、镜像 tag=git 短 hash、模型与数据走挂载卷不进镜像、服务器本地 build（不上 DockerHub）、回滚=起上一 tag。conda env b2q 保留用于 index 编码与验证
+
+
+---
+
+## serve Docker 镜像部署方案（定稿 2026-11-03）
+
+### 前置验证（已通过）
+
+- `docker pull python:3.12-slim` 成功（2026-11-03 实测）——docker hub 可达
+- 服务器另有公司私有 registry `hub.htres.cn`（guangxin-* 栈来源）——**不使用**（非我方命名空间）
+- 端口 8100 空闲已盘点
+
+### 1. 镜像设计
+
+| 项 | 决策 |
+|---|---|
+| 基础镜像 | `python:3.12-slim`（已缓存到服务器） |
+| 依赖层 | fastapi + uvicorn + onnxruntime + book2qa 包（pyproject `[serve]` extra） |
+| 运行用户 | 容器内非 root（`app`） |
+| 入口 | `uvicorn book2qa.serve:app --host 0.0.0.0 --port 8100` |
+| HEALTHCHECK | python urllib 探 `/healthz`（slim 无 curl） |
+| 体积预估 | slim 130M + 依赖 ~100M + 代码 ~2M ≈ **250–300M** |
+| 模型/数据 | **不进镜像**——挂载卷（见下） |
+
+### 2. 卷与环境变量
+
+| 挂载 | 宿主机（~/book2qa/） | 容器内 | 权限 |
+|---|---|---|---|
+| 教材产物 + store | `data/` | `/app/data` | rw |
+| bge ONNX | `models/bge-onnx/` | `/app/models` | ro |
+| 备份输出 | `backup/` | `/app/backup` | rw |
+
+环境变量（十二要素，不写死路径）：`B2Q_API_KEY`、`B2Q_DATA_DIR=/app/data`、
+`B2Q_MODELS_DIR=/app/models`、`B2Q_SERVE_PORT=8100`。
+
+### 3. compose（deploy/compose.yaml）
+
+```yaml
+services:
+  serve:
+    build: { context: .., dockerfile: book2qa/deploy/Dockerfile }
+    image: b2q-serve:<git短hash>
+    ports: ["8100:8100"]
+    volumes: ["../data:/app/data", "../models:/app/models:ro", "../backup:/app/backup"]
+    environment: [B2Q_API_KEY, B2Q_DATA_DIR=/app/data, B2Q_MODELS_DIR=/app/models]
+    restart: unless-stopped
+```
+
+### 4. 部署流水线（deploy.sh，本地执行）
+
+```
+前置：本地 109 例测试全绿（脚本前置断言，不绿即止）
+① git bundle → scp 到服务器 ~/book2qa/
+② 服务器：解包 pull → docker build -t b2q-serve:<hash>
+③ compose up -d（新 tag）→ 轮询 /healthz（30s 超时）
+④ 成功：prune 旧镜像（保留最近 3 个 tag）
+   失败：自动起上一个 tag（回滚）+ 非零退出
+```
+
+幂等可重跑；回滚 = `docker compose up -d` 指向上一 tag，一条命令。
+
+### 5. 验证方式说明
+
+- **本地机**：uvicorn 直跑 + 109 例回归 + HTTP 契约测试（不依赖本地 docker）
+- **服务器**：镜像 build + compose 冒烟（/healthz）+ 回滚演练（M1d 验收含此）
+
+### 6. 实施文件清单（M1a/M1d 执行时产出）
+
+| 文件 | 内容 |
+|---|---|
+| `book2qa/deploy/Dockerfile` | 按本方案 |
+| `book2qa/deploy/compose.yaml` | 按本方案 |
+| `book2qa/deploy/deploy.sh` | 本地侧流水线（bundle/scp/build/up/healthz/回滚） |
+| `book2qa/pyproject.toml` | 加 `[serve]` extra（fastapi/uvicorn） |
+| `book2qa/commands/serve.py` | FastAPI 应用（M1a） |
