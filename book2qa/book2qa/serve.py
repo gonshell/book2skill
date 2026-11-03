@@ -127,6 +127,30 @@ def create_app():
         finally:
             conn.close()
 
+    # ── M2a：/section —— 整节取料（learn 带学、ask 兜底的节点序列来源）──
+    @app.get("/section/{book}/{section_id}")
+    def section(book: str, section_id: str, req: Request):
+        _auth(req)
+        bundle, ok = _load_bundle(_ws())
+        sid = section_id.strip()
+        # 命中规则：unit 精确相等，或为该节的子节（unit 以 "sid." 开头）
+        nodes = [n for n in bundle.get("graph", [])
+                 if n.get("unit") == sid or n.get("unit", "").startswith(sid + ".")]
+        if not nodes:
+            raise HTTPException(404, "节 %r 下无知识点节点" % sid)
+        nodes.sort(key=lambda n: n["id"])
+        sec_row = next((r for r in bundle.get("structure", [])
+                        if r.get("id") == sid), None)
+        return {
+            "ok": True,
+            "book": book,
+            "section_id": sid,
+            "title": (sec_row or {}).get("title", sid),
+            "nodes": [{"id": n["id"], "title": n["title"], "type": n["type"],
+                       "pages": n.get("pages"), "prereq": n.get("prereq", []),
+                       "summary": n.get("summary", "")} for n in nodes],
+        }
+
     @app.put("/context/{context_id}")
     def put_ctx(context_id: str, req: Request, body: dict):
         _auth(req)

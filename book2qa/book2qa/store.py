@@ -156,11 +156,19 @@ def put_context(conn, context_id, account_id, last_node_id=None, history=None):
              json.dumps(history or [], ensure_ascii=False), _now()))
 
 
-def get_context(conn, context_id):
+def get_context(conn, context_id, ttl_days=7):
     row = conn.execute("SELECT * FROM context WHERE context_id=?",
                        (context_id,)).fetchone()
     if not row:
         return None
     d = dict(row)
+    # 7 天过期（deployment-review 决策点 5）：过期视同不存在，不抛错
+    try:
+        updated = time.mktime(time.strptime(d["updated_at"],
+                                            "%Y-%m-%dT%H:%M:%S"))
+        if time.time() - updated > ttl_days * 86400:
+            return None
+    except (TypeError, ValueError):
+        return None
     d["history"] = json.loads(d.pop("history_json"))
     return d
