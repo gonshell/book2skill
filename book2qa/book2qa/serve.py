@@ -1,0 +1,126 @@
+# -*- coding: utf-8 -*-
+"""b2q serve — FastAPI 运行主体（M1a，infra-server「Docker 部署方案」§1）。
+
+设计要点（roadmap M1a）：
+  引擎复用：/recall 与 /node 直接走 commands.recall/node 的 execute（同一份
+  引擎同一份信封，CLI 与 HTTP 契约天然一致，零重复实现）；
+  加载缓存：按 workspace 缓存一次数据装载（数据不变则不重解析）；
+  认证：B2Q_API_KEY 设置即启用（/healthz 豁免）；未设置 = 开发模式并明示；
+  请求日志：每次 /recall 追加 data/request_log.jsonl（巡检工具的数据源）。
+"""
+import io
+import json
+import os
+import threading
+import time
+
+from fastapi import FastAPI, HTTPException, Request
+
+from book2qa import paths
+
+# execute() 经 emit 打印信封到 stdout（CLI 契约）；serve 捕获解析复用同一实现。
+# redirect_stdout 是进程级的 → 全局锁串行化（recall 本就 CPU 密集，无碍）。
+EXEC_LOCK = threading.Lock()
+
+
+def _call_execute(fn, args):
+    from contextlib import redirect_stdout
+    with EXEC_LOCK, redirect_stdout(io.StringIO()) as buf:
+        rc = fn(args, t0=None)
+    return rc, json.loads(buf.getvalue())
+
+
+def _load_bundle(workspace):
+    """数据装载缓存：同 workspace 只装载一次（进程生命周期内）。"""
+    from book2qa.commands import recall as recall_cmd
+    bundle = recall_cmd._load(workspace)
+    ok = bool(bundle.get("graph"))
+    return bundle, ok
+
+
+def create_app():
+    app = FastAPI(title="b2q serve", version=_version())
+    state = {"workspace": None}
+
+    def _ws():
+        if state["workspace"] is None:
+            state["workspace"] = os.environ.get("B2Q_WORKSPACE") or \
+                paths.resolve_workspace(None)
+        return state["workspace"]
+
+    @app.get("/healthz")
+    def healthz():
+        bundle, ok = _load_bundle(_ws())
+        key = os.environ.get("B2Q_API_KEY")
+        return {"ok": ok and bool(key is not None or True),
+                "version": _version(),
+                "index_loaded": ok,
+                "nodes": len(bundle.get("graph", [])),
+                "auth": "on" if key else "off(dev)",
+                "workspace": _ws()}
+
+    @app.post("/recall")
+    def recall(req: Request, body: dict):
+        _auth(req)
+        from book2qa.commands import recall as recall_cmd
+        import argparse
+        args = argparse.Namespace(
+            book=body.get("book", "必修第一册"),
+            query=body.get("query", ""),
+            top=int(body.get("top", 5)),
+            scene=body.get("scene", "ask"),
+            context=body.get("context"),
+            workspace=_ws(),
+        )
+        if not args.query.strip():
+            raise HTTPException(422, "query 为空")
+        rc, env = _call_execute(recall_cmd.execute, args)
+        _log_request(_ws(), args.query, env)
+        return env
+
+    @app.get("/node/{book}/{node_id}")
+    def node(book: str, node_id: str, req: Request):
+        _auth(req)
+        from book2qa.commands import node as node_cmd
+        import argparse
+        args = argparse.Namespace(node_id=node_id, workspace=_ws())
+        rc, env = _call_execute(node_cmd.execute, args)
+        return env
+
+    return app
+
+
+def _auth(req):
+    key = os.environ.get("B2Q_API_KEY")
+    if key and req.headers.get("X-API-Key") != key:
+        raise HTTPException(401, "无效 API key")
+
+
+def _log_request(workspace, query, env):
+    import json
+    path = os.path.join(paths.data_dir(workspace), "request_log.jsonl")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+           "query": query,
+           "intent": env.get("intent"),
+           "confidence": env.get("confidence"),
+           "top_nodes": [c.get("node_id") for c in env.get("candidates", [])[:3]],
+           "elapsed_sec": env.get("elapsed_sec")}
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _version():
+    from book2qa import __version__
+    return __version__
+
+
+def main():
+    """b2q serve 入口：uvicorn 拉起。"""
+    import uvicorn
+    port = int(os.environ.get("B2Q_SERVE_PORT", "8100"))
+    uvicorn.run(create_app(), host="0.0.0.0", port=port, log_level="info")
+
+
+if __name__ == "__main__":
+    main()

@@ -55,6 +55,11 @@ def build_parser():
                     help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("node").execute(a, t0))
 
+    sp = sub.add_parser("serve", help="启动 HTTP 服务（M1a）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("serve").main())
+
     sp = sub.add_parser("config", help="用户配置管理（~/.book2qa/config.json）")
     sp.add_argument("action", choices=["get", "set", "path"])
     sp.add_argument("key", nargs="?", help="workspace | source_root")
