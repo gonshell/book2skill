@@ -113,7 +113,28 @@ def execute(args, t0):
         targets = [k] if k in node_by_id else unit_to_nodes.get(k, [])
         for nid in targets:
             r3_nodes[nid] = r3_nodes.get(nid, 0.0) + v
-    rankings = {"r1": r1_strong, "r3": r3_nodes, "r2": r2_owner}
+    # R4 向量路：index 存在且依赖可用时启用；缺失 = 三路正常形态（serving §1.2）。
+    # 编码器进程级缓存（模块全局）；查询带 BGE 官方指令前缀（embed.py 封装）。
+    # 降级原因必须进 warnings——宽 except 静默吞错曾让 R4 形同虚设（已修的教训）。
+    r4_owner = {}
+    _R4_ENCODER = globals().get("_R4_ENCODER")
+    try:
+        from book2qa import embed
+        idx = embed.load_index(paths.data_dir(workspace))
+        if idx:
+            if _R4_ENCODER is None:
+                models_dir = os.environ.get("B2Q_MODELS_DIR") or \
+                    os.path.expanduser("~/.book2qa/models/bge-onnx")
+                _R4_ENCODER = embed.Encoder(models_dir)
+                globals()["_R4_ENCODER"] = _R4_ENCODER
+            for m_row, _sc in embed.search(_R4_ENCODER, query, idx, top=8):
+                for nid in unit_to_nodes.get(m_row.get("section_id"), []):
+                    r4_owner[nid] = r4_owner.get(nid, 0.0) + 1.0
+    except Exception as e:
+        r4_owner = {}
+        warnings.append("r4_degraded: %s" % type(e).__name__)
+
+    rankings = {"r1": r1_strong, "r3": r3_nodes, "r2": r2_owner, "r4": r4_owner}
     fused = retrieval.rrf(rankings)
 
     ranked = sorted(fused.items(), key=lambda kv: -kv[1])[:TOP_N]

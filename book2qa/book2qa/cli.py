@@ -55,6 +55,13 @@ def build_parser():
                     help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("node").execute(a, t0))
 
+    sp = sub.add_parser("index", help="R4 向量索引构建（编码全册教学段落）")
+    sp.add_argument("--book", required=True, help="册名")
+    sp.add_argument("--source-root", help="book2md 产物根（覆盖三层解析）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS,
+                    help="工作区目录（覆盖四层解析）")
+    sp.set_defaults(func=lambda a, t0: _import("index").execute(a, t0))
+
     sp = sub.add_parser("serve", help="启动 HTTP 服务（M1a）")
     sp.add_argument("--workspace", default=argparse.SUPPRESS,
                     help="工作区目录（覆盖四层解析）")
