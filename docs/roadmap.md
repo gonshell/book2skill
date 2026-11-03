@@ -14,18 +14,20 @@
 | M1a | `b2q serve`（FastAPI：/recall /node /healthz + API key + 内存索引 + 请求日志） | HTTP 契约测试全绿 + uvicorn 冒烟 | ✅ 2026-11-03（121 例全绿） |
 | M1b | store（sqlite WAL：account/attempt/mastery/next_due/context）+ /log /due /mastery /context | 学情读写回归全绿 + SM-2 语义测试 | ✅ 2026-11-03（132 例全绿） |
 | M1c | R4：`b2q index`（本地建索引 2133 段×512 维）+ recall 接第 5 路名次制 + embed.py（CLS 池化/查询指令前缀） | gold 经 HTTP 评测 **Recall@5 ≥ 80%** | ✅ 2026-11-03（**80% 达标**，MRR 0.660；修 NameError 静默吞错——R4 此前未生效） |
-| M1d | 部署：**docker 镜像化，方案已定稿**（infra-server.md「serve Docker 镜像部署方案」：镜像设计/卷/流水线/回滚/文件清单全套）。前置全清：SSH ✓、hub 拉取 ✓（python:3.12-slim 已缓存）、bge ONNX ✓、端口 8100 ✓。产出五文件清单见方案 §6 | 一条命令起服务 + **回滚演练通过** | ⏳ 就绪（等 M1a） |
+| M1d | 部署：docker 镜像化落地（Dockerfile/compose/deploy.sh 三件套；bundle 流水线；uid 对齐；env_file 供 key；**回滚演练 200/200**） | 一条命令起服务 + 回滚演练 | ✅ 2026-11-03（**M1 全部收官，v0.6.0**） |
 
-交付：v0.2.0 tag + OpenAPI schema。怎么做：本地写 → push → 服务器 pull 重启 → 评测直连 HTTP。
+交付：v0.6.0（v0.2–v0.3.2 已被 book2md 时代占用；后续 M3=v0.7.0、M4=v0.8.0）。
 
-## M2 场景层最小闭环（ask 先行） ⏸ 等待 M1
+## M2 场景层最小闭环（ask 先行） ✅ 2026-11-03
 
-- 六种输出模板 → ask skill（WorkBuddy 形态）
-- /section /context 端点；失联降级话术
-- 验收：10 轮模拟对话，答案带页码依据、学情落库
-- 交付：ask skill 可安装 + 演示
+- 六种输出模板 → ask skill：`skills/book2qa-ask/SKILL.md`（铁律四条 / confidence 分流 / 六模板路由 / 引用可溯校验 / 失联话术）
+- /section /context 端点：✅（/section 整节节点序列+prereq；/context 7 天 TTL 在 store 层）
+- **验收 ✅：10 轮模拟对话全通**（`scripts/simulate_ask.py` = SKILL.md 可执行契约：取料/分流/模板/校验/落库全链，含 clarify/low 确认/前提错/stuck/too_broad/追问承接）
+- 服务器实测：/section 5.4.2 ✓、/log→mastery 1.0→next_due ✓、R4 容器内生效 ✓、回滚演练 ✓
+- 过程修真 bug：deploy.sh heredoc `$(id -u)` 未转义（本地 uid 197609 传给服务器 → 容器用户错位 → WAL 只读）；compose 空插值覆盖 env_file
+- 交付：ask skill + 演示 ✓（当前线上 tag=18e2842）
 
-## M3 生产层成型 + 制书第二册 ⏸ 等待 M1 + 用户裁定
+## M3 生产层成型 + 制书第二册 ⏳ **已解锁（M2 ✅）——等用户裁定即可开工**
 
 - 裁定辅助（candidates ↔ Excel）、发布工具（含回滚）、巡检脚本、备份 cron
 - **⚠️ 用户介入点：pending-review.md A/B 裁定 → graph 冻结 → index → 发布演练**
