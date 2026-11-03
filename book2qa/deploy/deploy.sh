@@ -32,16 +32,17 @@ scp -q "$GZSX_FINAL/$BOOK/markdown.md" "$GZSX_FINAL/$BOOK/page_map.md" \
 echo "== ② 服务器：代码更新 + 镜像构建 =="
 ssh "$SERVER" bash -s <<REMOTE
 set -euo pipefail
-cd $SHOME/repo
+HDIR="\$HOME/$SHOME"
+cd "\$HDIR/repo"
 if [ -d .git ]; then
-  git pull -q $SHOME/book2skill.bundle main
+  git pull -q "\$HDIR/book2skill.bundle" main
 else
-  git clone -q --depth 1 -b main $SHOME/book2skill.bundle .
+  git clone -q --depth 1 -b main "\$HDIR/book2skill.bundle" .
 fi
 docker build -q -t b2q-serve:$TAG -f book2qa/deploy/Dockerfile .
 cd book2qa/deploy
-[ -f deploy.env ] || { echo "B2Q_API_KEY=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" > deploy.env; chmod 600 deploy.env; }
-BOOK2QA_HOME="\$HOME/$SHOME" TAG=$TAG docker compose up -d
+[ -f deploy.env ] || { echo "B2Q_API_KEY=\$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')" > deploy.env; chmod 600 deploy.env; }
+BOOK2QA_HOME="\$HDIR" TAG=$TAG docker compose up -d
 REMOTE
 
 echo "== ③ 健康检查（30s 超时 → 回滚）=="
