@@ -14,7 +14,7 @@
 ## 1. 目录布局
 
 ```
-/opt/book2qa/
+~/book2qa/
 ├── models/                 # 模型文件仓库（一次性下载源）
 │   └── bge-small-zh-v1.5-onnx/     # ~150MB，R4 用
 ├── backup/                 # 异地备份（原待办：gzsx-md 是孤本）
@@ -32,7 +32,7 @@
 | 项 | 说明 |
 |---|---|
 | 下载 bge ONNX | 服务器上 `huggingface-cli` / `modelscope` / 直接 wget 均可（该机已验证能下 MinerU 模型） |
-| 静态文件服务 | **caddy**（单二进制 + 自动目录页）或 `docker run nginx`，共享 `/opt/book2qa/`，监听 8080（避开网关 8000） |
+| 静态文件服务 | **caddy**（单二进制 + 自动目录页）或 `docker run nginx`，共享 `~/book2qa/`，监听 8080（避开网关 8000） |
 | 用途 | 本地机 `curl http://172.20.4.209:8080/models/...` 拉模型 → 落 `~/.book2qa/models/` |
 
 **架构决策（R4 计算位置）**：模型文件放服务器做下载源，**推理仍在学生机**
@@ -70,10 +70,10 @@ GitHub 之外的备份远端。v1 非必需，GitHub 已够用。
 - ❌ 公网暴露——所有新端口只绑 172.20.x 内网
 - ❌ 在服务器上装 Node/渲染栈——渲染在本地（book2md 已跑通）
 
-## 5. 需要用户提供的
+## 5. 服务器接入（✅ 2026-11-03 已解决）
 
-1. **SSH 访问方式**：本地机能否直连 172.20.4.209？凭据/密钥如何配置
-   （或用户代跑阶段 1 的安装命令）；
-2. **磁盘余量确认**：/opt 所在分区 ≥2GB 空闲即可；
-3. **下载源可达性**：服务器上 HuggingFace 与 ModelScope 哪个通（该机下过
-   MinerU 模型，推测都通，确认一次即可）。
+- SSH：`ssh localgpu`（~/.ssh/config 别名，xiesg@dev-server-1，免密可用）
+- sudo 需密码 → **部署用 `~/book2qa/`，不用 /opt**（无需 sudo）
+- python3.12.3 + docker（xiesg 在 docker 组，mineru-api 容器已在跑）
+- 下载源：hf-mirror.com ✓ / modelscope.cn ✓（均可达）
+- 磁盘：233G 总 / 127G 空闲

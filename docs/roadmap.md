@@ -14,7 +14,7 @@
 | M1a | `b2q serve`（FastAPI：/recall /node /healthz + API key + 内存索引 + 请求日志） | HTTP 契约测试全绿 | ⏳ |
 | M1b | store（sqlite WAL：account/attempt/mastery/next_due/context）+ /log /due | 学情读写回归全绿 | ⏳ |
 | M1c | R4：`b2q index`（服务器跑）+ recall 接向量路 | gold 经 HTTP 评测 **Recall@5 ≥ 80%** | ⏳ |
-| M1d | 部署：172.20.4.209 docker compose + 部署脚本（push→pull→restart） | 一条命令起服务 | ⏳ |
+| M1d | 部署：172.20.4.209 docker compose + 部署脚本（push→pull→restart）。**SSH 已通（ssh localgpu），模型下载源已验证** | 一条命令起服务 | ⏳ 就绪 |
 
 交付：v0.2.0 tag + OpenAPI schema。怎么做：本地写 → push → 服务器 pull 重启 → 评测直连 HTTP。
 
@@ -52,4 +52,4 @@ S1 剩余（裁定）→ M3 ｜ S2 剩余（R4）→ M1 ｜ S3/S4 → 被 M2/M4 
 
 - M1 不依赖用户裁定，可立即开工
 - graph 冻结依赖 pending-review 裁定；评测基准依赖 gold 冻结（用户过目）
-- R4 需服务器下载 bge 模型（链路已验证）；serve 部署需确定 SSH 方式
+- R4 需服务器下载 bge 模型（hf-mirror 可达已验证）；SSH 免密已通（localgpu）
