@@ -1,0 +1,4 @@
+tests
+deploy
+__pycache__
+*.pyc

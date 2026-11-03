@@ -1,0 +1,19 @@
+# 运行时编排（部署脚本生成/填充 TAG 与 BOOK2QA_HOME；API key 走 deploy.env）
+services:
+  serve:
+    image: b2q-serve:${TAG}
+    container_name: b2q-serve
+    ports:
+      - "8100:8100"
+    volumes:
+      - ${BOOK2QA_HOME}/data:/app/data
+      - ${BOOK2QA_HOME}/models:/app/models:ro
+      - ${BOOK2QA_HOME}/backup:/app/backup
+      - ${BOOK2QA_HOME}/src:/app/src:ro
+    environment:
+      - B2Q_API_KEY=${B2Q_API_KEY}
+      - B2Q_WORKSPACE=/app/data
+      - B2Q_DATA_DIR=/app/data
+      - B2Q_MODELS_DIR=/app/models
+      - B2Q_SOURCE_ROOT=/app/src
+    restart: unless-stopped
