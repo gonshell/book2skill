@@ -105,6 +105,12 @@ GitHub 之外的备份远端。v1 非必需，GitHub 已够用。
 - 服务器另有公司私有 registry `hub.htres.cn`（guangxin-* 栈来源）——**不使用**（非我方命名空间）
 - 端口 8100 空闲已盘点
 
+> ⚠️ **本节为设计稿口径**（2026-11-03 定稿时的预演）。实际部署以
+> **docs/ops-runbook.md** 与 **book2qa/deploy/compose.yaml** 为准——实施后的
+> 实际差异：容器内路径为 `/srv` 语义（`B2Q_WORKSPACE=/srv/workspace`、
+> `B2Q_IMAGES_ROOT=/srv/src`），`B2Q_DATA_DIR` 已废弃；卷映射为
+> data/models/src/backup 四挂载；uid 对齐走 `B2Q_UID/GID` 注入。
+
 ### 1. 镜像设计
 
 | 项 | 决策 |

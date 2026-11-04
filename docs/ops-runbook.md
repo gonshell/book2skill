@@ -65,6 +65,10 @@ curl -s http://$SERVER_IP:8100/img/必修第一册/images/page_128_image_4.jpg \
 
 ## 3. 日常更新（改代码/改图谱后）
 
+> **deploy.sh 的可配环境变量**（换机器/换册时用，见脚本头注释）：
+> `B2Q_DEPLOY_SERVER`（ssh 别名）、`B2Q_SERVER_HOME`（默认 book2qa）、
+> `B2Q_DEPLOY_BOOK`、`B2Q_GZSX_FINAL`（本地 gzsx-md/final 绝对路径）、`B2Q_PYTHON`。
+
 ```bash
 # 本地：测试全绿 → 提交 → 直接重跑 deploy.sh（幂等）
 B2Q_PYTHON=<python> bash book2qa/deploy/deploy.sh
