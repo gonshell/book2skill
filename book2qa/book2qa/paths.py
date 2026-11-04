@@ -52,6 +52,17 @@ def data_dir(workspace):
     return os.path.join(workspace, DATA_SUBDIR)
 
 
+def book_data_dir(workspace, book):
+    """按册隔离的产物目录（M3-4：必修二差点覆盖必修一冻结图谱的教训）。"""
+    return os.path.join(data_dir(workspace), book)
+
+
+def ensure_book_data_dir(workspace, book):
+    d = book_data_dir(workspace, book)
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
 def ensure_data_dir(workspace):
     d = data_dir(workspace)
     os.makedirs(d, exist_ok=True)

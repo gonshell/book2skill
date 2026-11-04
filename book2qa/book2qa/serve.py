@@ -30,11 +30,29 @@ def _call_execute(fn, args):
     return rc, json.loads(buf.getvalue())
 
 
-def _load_bundle(workspace):
-    """数据装载缓存：同 workspace 只装载一次（进程生命周期内）。"""
+def _load_bundle(workspace, book=None):
+    """数据装载缓存：同 (workspace, book) 只装载一次。
+
+    book=None（healthz 等）时聚合全部册的 graph/structure。"""
     from book2qa.commands import recall as recall_cmd
-    bundle = recall_cmd._load(workspace)
-    ok = bool(bundle.get("graph"))
+    if book:
+        bundle = recall_cmd._load(workspace, book)
+        ok = bool(bundle.get("graph"))
+        return bundle, ok
+    bundle = {"graph": [], "structure": []}
+    root = paths.data_dir(workspace)
+    ok = False
+    if os.path.isdir(root):
+        for name in sorted(os.listdir(root)):
+            gpath = os.path.join(root, name, "graph.jsonl")
+            if os.path.isfile(gpath):
+                with open(gpath, encoding="utf-8") as f:
+                    bundle["graph"] += [json.loads(l) for l in f if l.strip()]
+                spath = os.path.join(root, name, "structure.jsonl")
+                if os.path.isfile(spath):
+                    with open(spath, encoding="utf-8") as f:
+                        bundle["structure"] += [json.loads(l) for l in f if l.strip()]
+                ok = True
     return bundle, ok
 
 
@@ -184,7 +202,7 @@ def create_app():
     @app.get("/section/{book}/{section_id}")
     def section(book: str, section_id: str, req: Request):
         _auth(req)
-        bundle, ok = _load_bundle(_ws())
+        bundle, ok = _load_bundle(_ws(), book)
         sid = section_id.strip()
         # 命中规则：unit 精确相等，或为该节的子节（unit 以 "sid." 开头）
         nodes = [n for n in bundle.get("graph", [])

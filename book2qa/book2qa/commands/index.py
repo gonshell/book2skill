@@ -59,7 +59,7 @@ def execute(args, t0):
     import numpy as np
     mat = np.vstack(vectors).astype(np.float32)
 
-    out_dir = paths.ensure_data_dir(workspace)
+    out_dir = paths.ensure_book_data_dir(workspace, args.book)
     np.savez_compressed(os.path.join(out_dir, "vectors.npz"),
                         vectors=mat)
     with open(os.path.join(out_dir, "vectors_meta.jsonl"), "w",

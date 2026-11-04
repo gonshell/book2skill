@@ -240,13 +240,17 @@ def split_paragraphs(text, marks, page_map):
 
 
 def load_structure(workspace, book):
-    """读上一步产物 data/structure.jsonl → [dict]。"""
-    return _load_jsonl(os.path.join(data_dir(workspace), "structure.jsonl"))
+    """读上一步产物 data/<册>/structure.jsonl → [dict]。"""
+    from book2qa import paths
+    return _load_jsonl(os.path.join(paths.book_data_dir(workspace, book),
+                                    "structure.jsonl"))
 
 
 def load_para_meta(workspace, book):
-    """读 data/para_meta.jsonl → [dict]。"""
-    return _load_jsonl(os.path.join(data_dir(workspace), "para_meta.jsonl"))
+    """读 data/<册>/para_meta.jsonl → [dict]。"""
+    from book2qa import paths
+    return _load_jsonl(os.path.join(paths.book_data_dir(workspace, book),
+                                    "para_meta.jsonl"))
 
 
 def _load_jsonl(path):

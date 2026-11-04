@@ -26,8 +26,8 @@ def _cut_sentence(text, limit):
     return window[:cut + 1]
 
 
-def _load(workspace):
-    d = paths.data_dir(workspace)
+def _load(workspace, book):
+    d = paths.book_data_dir(workspace, book)
     rows = {}
     for name in ("graph", "structure", "para_meta", "exercises", "figures"):
         path = os.path.join(d, name + ".jsonl")
@@ -58,7 +58,7 @@ def execute(args, t0):
     if not os.path.isfile(files["markdown"]):
         return emit("recall", EXIT_MISSING, workspace=workspace, book=args.book,
                     error="缺少 book2md 产物（先跑 build）", t0=t0)
-    data = _load(workspace)
+    data = _load(workspace, args.book)
     nodes = data["graph"]
     if not nodes:
         return emit("recall", EXIT_MISSING, workspace=workspace, book=args.book,
@@ -135,7 +135,7 @@ def execute(args, t0):
     _R4_ENCODER = globals().get("_R4_ENCODER")
     try:
         from book2qa import embed
-        idx = embed.load_index(paths.data_dir(workspace))
+        idx = embed.load_index(paths.book_data_dir(workspace, args.book))
         if idx:
             if _R4_ENCODER is None:
                 models_dir = os.environ.get("B2Q_MODELS_DIR") or \

@@ -11,7 +11,8 @@ from book2qa.exit_codes import EXIT_MISSING, EXIT_OK
 def execute(args, t0):
     import json
     workspace = paths.resolve_workspace(args)
-    path = os.path.join(paths.data_dir(workspace), "graph.jsonl")
+    book = getattr(args, "book", "必修第一册")
+    path = os.path.join(paths.book_data_dir(workspace, book), "graph.jsonl")
     node = None
     if os.path.isfile(path):
         with open(path, encoding="utf-8") as f:

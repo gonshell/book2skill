@@ -216,8 +216,9 @@ def apply_actions(cands, acts):
 
 
 # ── 命令入口 ──────────────────────────────────────────────
-def _load_cands(workspace):
-    path = os.path.join(paths.data_dir(workspace), "candidates.jsonl")
+def _load_cands(workspace, book):
+    path = os.path.join(paths.book_data_dir(workspace, book),
+                        "candidates.jsonl")
     if not os.path.isfile(path):
         return None, path
     with open(path, encoding="utf-8") as f:
@@ -235,12 +236,12 @@ def _quota(cands):
 
 def cmd_export(args, t0):
     workspace = paths.resolve_workspace(args)
-    cands, path = _load_cands(workspace)
+    cands, path = _load_cands(workspace, args.book)
     if cands is None:
         return emit("review-export", EXIT_MISSING, workspace=workspace,
                     error="candidates.jsonl 不存在（先跑 build --stage=candidates）：%s"
                           % path, t0=t0)
-    out = args.out or os.path.join(paths.data_dir(workspace),
+    out = args.out or os.path.join(paths.book_data_dir(workspace, args.book),
                                    "review-%s.xlsx" % args.book)
     export_xlsx(cands, out)
     return emit("review-export", EXIT_OK, workspace=workspace, book=args.book,
@@ -254,7 +255,7 @@ def cmd_export(args, t0):
 
 def cmd_import(args, t0):
     workspace = paths.resolve_workspace(args)
-    cands, path = _load_cands(workspace)
+    cands, path = _load_cands(workspace, args.book)
     if cands is None:
         return emit("review-import", EXIT_MISSING, workspace=workspace,
                     error="candidates.jsonl 不存在：%s" % path, t0=t0)

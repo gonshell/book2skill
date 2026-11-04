@@ -50,7 +50,7 @@ def execute(args, t0):
 def _stage_graph(args, workspace, files, t0):
     import datetime
     from book2qa import graph as graph_mod, report as report_mod, source
-    data_dir = paths.data_dir(workspace)
+    data_dir = paths.book_data_dir(workspace, args.book)
     cands = source._load_jsonl(os.path.join(data_dir, "candidates.jsonl"))
     ex_rows = source._load_jsonl(os.path.join(data_dir, "exercises.jsonl"))
     fig_rows = source._load_jsonl(os.path.join(data_dir, "figures.jsonl"))
@@ -97,7 +97,7 @@ def _stage_candidates(args, workspace, files, t0):
     rows = source.load_structure(workspace, args.book)
     para_meta = source.load_para_meta(workspace, args.book)
     ex_rows = source._load_jsonl(
-        os.path.join(paths.data_dir(workspace), "exercises.jsonl"))
+        os.path.join(paths.book_data_dir(workspace, args.book), "exercises.jsonl"))
     if not rows or not para_meta or not ex_rows:
         return emit("build", EXIT_MISSING, workspace=workspace, book=args.book,
                     error="缺少前序产物——请先跑 --stage=structure 与 --stage=extract",
@@ -112,7 +112,7 @@ def _stage_candidates(args, workspace, files, t0):
     now = datetime.datetime.now().isoformat(timespec="seconds")
     for c in cands:
         c["built_at"] = now
-    out = os.path.join(paths.ensure_data_dir(workspace), "candidates.jsonl")
+    out = os.path.join(paths.ensure_book_data_dir(workspace, args.book), "candidates.jsonl")
     with open(out, "w", encoding="utf-8") as f:
         for c in cands:
             f.write(source.to_json_line(c) + "\n")
@@ -121,7 +121,7 @@ def _stage_candidates(args, workspace, files, t0):
              "合并单元": len(quota.get("merged_units", {}))}
     report_path = report_mod.write_report(workspace, issues, stats)
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
-                out_dir=paths.data_dir(workspace),
+                out_dir=paths.book_data_dir(workspace, args.book),
                 artifacts={"candidates": out, "build_report": report_path},
                 issues=issues, t0=t0, extra={"candidates": len(cands),
                                              "quota": quota})
@@ -142,16 +142,16 @@ def _stage_structure(args, workspace, files, t0):
                                             % files["page_map"]}]
     paragraphs = source.split_paragraphs(text, page_marks, page_map)
     rows, para_meta, issues = structure.build_tree(paragraphs)
-    out = os.path.join(paths.ensure_data_dir(workspace), "structure.jsonl")
+    out = os.path.join(paths.ensure_book_data_dir(workspace, args.book), "structure.jsonl")
     with open(out, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(source.to_json_line(r) + "\n")
-    meta_out = os.path.join(paths.data_dir(workspace), "para_meta.jsonl")
+    meta_out = os.path.join(paths.book_data_dir(workspace, args.book), "para_meta.jsonl")
     with open(meta_out, "w", encoding="utf-8") as f:
         for m in para_meta:
             f.write(source.to_json_line(m) + "\n")
     return emit("build", EXIT_OK, workspace=workspace, book=args.book,
-                out_dir=paths.data_dir(workspace),
+                out_dir=paths.book_data_dir(workspace, args.book),
                 artifacts={"structure": out, "para_meta": meta_out},
                 issues=pm_issues + issues, t0=t0,
                 extra={"sections": len(rows), "paragraphs": len(paragraphs)})
@@ -168,7 +168,7 @@ def _stage_extract(args, workspace, files, t0):
     page_marks, pm_issues = source.parse_page_marks(text)
     page_map = source.parse_page_map(files["page_map"])
     paragraphs = source.split_paragraphs(text, page_marks, page_map)
-    out_dir = paths.ensure_data_dir(workspace)
+    out_dir = paths.ensure_book_data_dir(workspace, args.book)
 
     ex_rows, ex_issues = exercises.extract(paragraphs, para_meta)
     fig_rows, fig_issues = figures.map_figures(paragraphs, page_marks,
