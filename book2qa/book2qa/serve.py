@@ -135,6 +135,20 @@ def create_app():
             conn.close()
 
     # ── M2a：/section —— 整节取料（learn 带学、ask 兜底的节点序列来源）──
+    @app.get("/img/{book}/{img_path:path}")
+    def img(book: str, img_path: str, req: Request):
+        """教材原图（candidates[].figures[].file → 此端点）。"""
+        _auth(req)
+        from fastapi.responses import FileResponse
+        root = os.environ.get("B2Q_IMAGES_ROOT")
+        if not root or not os.path.isdir(root):
+            raise HTTPException(503, "未配置教材图片根（B2Q_IMAGES_ROOT）")
+        full = os.path.realpath(os.path.join(root, book, img_path))
+        if not full.startswith(os.path.realpath(root) + os.sep) \
+                or not os.path.isfile(full):
+            raise HTTPException(404, "图不存在")
+        return FileResponse(full)
+
     @app.get("/section/{book}/{section_id}")
     def section(book: str, section_id: str, req: Request):
         _auth(req)

@@ -17,6 +17,15 @@ PY="${B2Q_PYTHON:-python}"
 echo "== 前置：本地测试全绿 =="
 (cd "$ROOT/book2qa" && "$PY" -m unittest discover -s tests -q)
 
+# ── IMAGES 同步（幂等：服务器有标记即跳过；教材图片 ~19MB/册）──
+if ! ssh "$SERVER" "test -f \"\$HOME/$SHOME/src/.images-synced\"" 2>/dev/null; then
+  echo "== ⓪ 同步教材图片（首次 ~19MB）=="
+  tar -C "$GZSX_FINAL/$BOOK" -cf /tmp/b2q-images.tar images
+  scp -q /tmp/b2q-images.tar "$SERVER:$SHOME/"
+  ssh "$SERVER" "mkdir -p \"\$HOME/$SHOME/src/$BOOK\" && tar -C \"\$HOME/$SHOME/src/$BOOK\" -xf \"\$HOME/$SHOME/b2q-images.tar\" && touch \"\$HOME/$SHOME/src/.images-synced\" && rm \"\$HOME/$SHOME/b2q-images.tar\""
+  rm -f /tmp/b2q-images.tar
+fi
+
 echo "== ① bundle + 数据传输 =="
 BUNDLE="$ROOT/dist/book2skill.bundle"
 mkdir -p "$ROOT/dist"

@@ -15,6 +15,7 @@ services:
       - B2Q_WORKSPACE=/srv/workspace
       - B2Q_MODELS_DIR=/srv/models/bge-onnx
       - B2Q_SOURCE_ROOT=/srv/src
+      - B2Q_IMAGES_ROOT=/srv/src
     env_file:
       - deploy.env
     # 容器以宿主 xiesg 的 uid 运行——卷内文件读写权限对齐（B2Q_UID/GID 由 deploy.sh 注入）

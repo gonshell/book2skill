@@ -29,8 +29,9 @@ def _cut_sentence(text, limit):
 def _load(workspace):
     d = paths.data_dir(workspace)
     rows = {}
-    for name in ("graph", "structure", "para_meta", "exercises"):
-        rows[name] = source_jsonl(os.path.join(d, name + ".jsonl"))
+    for name in ("graph", "structure", "para_meta", "exercises", "figures"):
+        path = os.path.join(d, name + ".jsonl")
+        rows[name] = source_jsonl(path) if os.path.isfile(path) else []
     return rows
 
 
@@ -157,6 +158,7 @@ def execute(args, t0):
         warnings.append("r4_not_implemented")
 
     cands, budget = [], 0
+    figs_all = data.get("figures") or []
     for nid, score in ranked:
         n = node_by_id.get(nid)
         if not n:
@@ -188,6 +190,17 @@ def execute(args, t0):
             trimmed.append({**q, "text": take,
                             **({"truncated": True}
                                if len(take) < len(q["text"]) else {})})
+        # 教材真图：图号映射中教材页落在节点页区间内的图（top1 全量最多 3 张，
+        # 其余候选不带——compact 与防 token 膨胀同一逻辑）
+        node_figs = []
+        if not cands:   # top1
+            pg = n.get("pages") or [None, None]
+            if pg[0] is not None:
+                node_figs = [{"fig": f["fig"], "file": f["file"],
+                              "textbook_page": f.get("textbook_page")}
+                             for f in figs_all
+                             if f.get("textbook_page") is not None
+                             and pg[0] <= f["textbook_page"] <= pg[1]][:3]
         cands.append({
             "node_id": nid, "title": n.get("title"), "type": n.get("type"),
             "pages": n.get("pages"), "score": round(score, 4),
@@ -197,6 +210,7 @@ def execute(args, t0):
             "formulas": n.get("formulas", []),
             "errors": n.get("errors", []),
             "exercises": n.get("exercises", [])[:3],
+            **({"figures": node_figs} if node_figs else {}),
         })
 
     conf = retrieval.confidence_of(cands)
