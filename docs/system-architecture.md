@@ -89,6 +89,7 @@ flowchart TB
 | 部署形态与多平台发布 | deployment-review.md |
 | 服务器与工具 | infra-server.md |
 | 部署/发布/备份操作手册 | ops-runbook.md（✅ 部署运维手册） |
+| **制书全流程剧本（PDF→学生）** | **production-runbook.md** |
 | **里程碑计划与状态（权威）** | **roadmap.md** |
 | 评审批次 | book2skill-review-report.md（仅本地） |
 

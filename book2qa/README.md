@@ -51,6 +51,7 @@ book2qa/
 | 图谱契约（冻结区） | docs/graph-spec.md |
 | 检索与输出模板 | docs/retrieval.md、docs/skill-io.md |
 | 部署与运维 | docs/infra-server.md、**docs/ops-runbook.md** |
+| **制书全流程剧本** | **docs/production-runbook.md** |
 | 架构 | docs/arch.md、docs/system-architecture.md |
 
 ## 测试与质量
