@@ -15,6 +15,7 @@ FULL=0
 [ "${1:-}" = "--full" ] && FULL=1
 
 echo "== 备份开始 $DATE（--full=$FULL）=="
+ssh "$SERVER" "mkdir -p $DEST/{git,store,memory,data,gzsx-md}"
 
 # ① git bundle（代码全历史）
 git -C "$ROOT" bundle create /tmp/b2k-git.bundle --all
