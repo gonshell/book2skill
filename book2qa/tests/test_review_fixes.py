@@ -107,5 +107,19 @@ class TestRvQ7(unittest.TestCase):
         self.assertLess(len(set(labels)), len(labels))  # label 确有重名（前提成立）
 
 
+class TestQuoteCut(unittest.TestCase):
+    """截断必须落在句子边界（2026-11-04 用户实测：P77 定义句被硬切成两半）。"""
+
+    def test_cut_at_sentence_boundary(self):
+        from book2qa.commands.recall import _cut_sentence
+        t = "一般地，设函数f(x)的定义域为D，区间 I⊆D。如果任取 x1、x2，则一切成立。后续"
+        out = _cut_sentence(t, 30)
+        self.assertTrue(out.endswith("。"), repr(out))
+        self.assertLessEqual(len(out), 30)
+        self.assertEqual(_cut_sentence("短文", 10), "短文")
+        # 窗口内无句末标点 → 整段截断（不抛错）
+        self.assertEqual(len(_cut_sentence("abc" * 50, 20)), 20)
+
+
 if __name__ == "__main__":
     unittest.main()

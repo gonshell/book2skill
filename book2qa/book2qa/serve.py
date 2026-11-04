@@ -75,6 +75,13 @@ def create_app():
         if not args.query.strip():
             raise HTTPException(422, "query 为空")
         rc, env = _call_execute(recall_cmd.execute, args)
+        # compact（默认开）：非 top1 候选只留元数据——模板只用 top1 的全文料，
+        # 全量 quotes/formulas/exercises×3 候选是积分成本的大头（试用实测 11.71 分/题）
+        if body.get("compact", True):
+            for c in (env.get("candidates") or [])[1:]:
+                for k in ("quotes", "formulas", "errors", "exercises", "summary"):
+                    c.pop(k, None)
+                c["compact"] = True
         _log_request(_ws(), args.query, env)
         return env
 

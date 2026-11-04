@@ -11,6 +11,20 @@ from book2qa.exit_codes import EXIT_MISSING, EXIT_OK, EXIT_USAGE
 QUOTE_BUDGET = 1200      # skill-io §3 token 预算：教材原文块
 TOP_N = 5
 
+_SENT_END = "。！？；"
+
+
+def _cut_sentence(text, limit):
+    """预算内截断到**句子边界**（实测教训：硬切把 P77 定义句切成两半，
+    模型只能拿到半句原文）。窗口内无句末标点才整段截断。"""
+    if len(text) <= limit:
+        return text
+    window = text[:limit]
+    cut = max(window.rfind(ch) for ch in _SENT_END)
+    if cut <= 0:
+        return window
+    return window[:cut + 1]
+
 
 def _load(workspace):
     d = paths.data_dir(workspace)
@@ -169,9 +183,11 @@ def execute(args, t0):
         for q in quotes:
             if budget >= QUOTE_BUDGET:
                 break
-            take = q["text"][:QUOTE_BUDGET - budget]
+            take = _cut_sentence(q["text"], QUOTE_BUDGET - budget)
             budget += len(take)
-            trimmed.append({**q, "text": take})
+            trimmed.append({**q, "text": take,
+                            **({"truncated": True}
+                               if len(take) < len(q["text"]) else {})})
         cands.append({
             "node_id": nid, "title": n.get("title"), "type": n.get("type"),
             "pages": n.get("pages"), "score": round(score, 4),
