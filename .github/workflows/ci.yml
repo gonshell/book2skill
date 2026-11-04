@@ -33,3 +33,28 @@ jobs:
 
       - name: 命令入口可用
         run: b2m --version
+
+  test-book2qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install fastapi "uvicorn[standard]" onnxruntime \
+            tokenizers numpy matplotlib openpyxl httpx
+          python -m pip install -e book2qa
+
+      - name: 单元测试（154 例；真实语料类自动 skip）
+        working-directory: book2qa
+        env:
+          B2Q_WORKSPACE: ${{ github.workspace }}/book2qa
+        run: python -m unittest discover -s tests -q
+
+      - name: 命令入口可用
+        run: b2q --version

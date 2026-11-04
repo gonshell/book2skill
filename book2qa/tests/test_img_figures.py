@@ -12,9 +12,12 @@ class TestFigures(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.environ.pop("B2Q_API_KEY", None)
-        os.environ["B2Q_IMAGES_ROOT"] = os.path.join(
+        root = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "..", "..", "gzsx-md", "final")
+        if not os.path.isdir(os.path.join(root, "必修第一册", "images")):
+            raise unittest.SkipTest("无真实语料（CI）")
+        os.environ["B2Q_IMAGES_ROOT"] = root
         cls.client = TestClient(serve.create_app())
 
     def test_top1_has_figures_in_page_range(self):

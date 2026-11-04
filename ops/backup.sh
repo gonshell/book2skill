@@ -26,6 +26,16 @@ echo "① git bundle ✓"
 ssh "$SERVER" "cp ~/book2qa/data/store.sqlite $DEST/store/store-$DATE.sqlite 2>/dev/null || true; ls -t $DEST/store/store-*.sqlite | tail -n +61 | xargs -r rm -f"
 echo "② store ✓"
 
+# ②b book2qa/data 冻结产物（按册目录 + gold；入库外双保险）
+tar -C "$ROOT/book2qa/data" -cf /tmp/b2k-data.tar \
+    $(cd "$ROOT/book2qa/data" && ls -d */ 2>/dev/null | tr -d '/') eval_gold.jsonl \
+    2>/dev/null || true
+if [ -s /tmp/b2k-data.tar ]; then
+  scp -q /tmp/b2k-data.tar "$SERVER:$DEST/data/data-$DATE.tar"
+  rm -f /tmp/b2k-data.tar
+  echo "②b data 冻结产物 ✓"
+fi
+
 # ③ memory（私有，仅内网服务器）
 tar -C "$WS" -cf /tmp/b2k-mem.tar .workbuddy/memory 2>/dev/null || tar -C "$WS" -cf /tmp/b2k-mem.tar workbuddy-2026-10-18-10-47-49/.workbuddy/memory
 scp -q /tmp/b2k-mem.tar "$SERVER:$DEST/memory/memory-$DATE.tar"
