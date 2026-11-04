@@ -29,7 +29,7 @@
 
 ## M3 生产层成型 + 制书第二册 ⏳ **已解锁（M2 ✅）——等用户裁定即可开工**
 
-- 裁定辅助（candidates ↔ Excel）、发布工具（含回滚）、巡检脚本、备份 cron
+- 裁定辅助（candidates ↔ Excel）✅ 2026-11-04 ｜ 巡检报告 ✅（154 条真实日志首报：51 低置信/13 组聚类）｜ 备份 ✅（gzsx-md 523M 全量+git bundle+store+memory 落服务器，对账 6986 文件）｜ 发布工具=deploy.sh 已有
 - **⚠️ 用户介入点：pending-review.md A/B 裁定 → graph 冻结 → index → 发布演练**
 - 验收：制书全流程走通（含一次回滚演练）
 - 交付：ops-runbook.md + v0.7.0
