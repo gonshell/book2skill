@@ -24,4 +24,8 @@ book2md/tests/fixtures/blocks/
 Thumbs.db
 .idea/
 .vscode/
-book2qa/data/
+book2qa/data/*
+# 冻结产物与人工裁定入库（D1：丢了要用户重裁）；运行态（store/log/plots/trial）仍忽略
+!book2qa/data/必修第一册/
+!book2qa/data/必修第二册/
+!book2qa/data/eval_gold.jsonl

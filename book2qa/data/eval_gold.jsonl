@@ -1,0 +1,42 @@
+{"qid":"G01","query":"单调性为什么一定要说任意两个数","intent":"concept_why","gold_nodes":["M1-C3-S2A-K01"],"note":"真实问法，考动机段"}
+{"qid":"G02","query":"奇函数是不是一定过原点","intent":"concept_why","gold_nodes":["M1-C3-S2B-K01","M1-C5-S4B-K02"],"note":"前提错：定义域不含0时不成立"}
+{"qid":"G03","query":"为什么指数函数的底数不能是负数","intent":"concept_why","gold_nodes":["M1-C4-S2A-K01"],"note":"前提类追问"}
+{"qid":"G04","query":"诱导公式为什么要奇变偶不变","intent":"concept_why","gold_nodes":["M1-C5-S3-K01"],"note":"方法背后原理"}
+{"qid":"G05","query":"基本不等式为什么要一正二定三相等","intent":"concept_why","gold_nodes":["M1-C2-S2-K01"],"note":"使用条件动机"}
+{"qid":"G06","query":"函数到底是什么，别用定义说话","intent":"concept_why","gold_nodes":["M1-C3-S1A-K01"],"note":"概念根源"}
+{"qid":"G07","query":"对数是谁发明的，为什么要发明它","intent":"concept_why","gold_nodes":["M1-C4-S3A-K01"],"note":"动机段"}
+{"qid":"G08","query":"帮我看看这题我算的 x=2 对不对，题目是解不等式 x^2-3x+2>0","intent":"check_work","gold_nodes":["M1-C2-S3-K01"],"note":"判自己答案"}
+{"qid":"G09","query":"我写 f(-1)=-f(1) 所以它是奇函数，这样判断对吗","intent":"check_work","gold_nodes":["M1-C3-S2B-K01","M1-C5-S4B-K02"],"note":"判过程"}
+{"qid":"G10","query":"二分法最后那段区间取左还是取右，我怎么老混","intent":"check_work","gold_nodes":["M1-C4-S5B-K01"],"note":"易错定位"}
+{"qid":"G11","query":"判断下列函数哪个是奇函数哪个是偶函数，怎么做这类题","intent":"method_list","gold_nodes":["M1-C3-S2B-K01","M1-C5-S4B-K02"],"note":"方法清单"}
+{"qid":"G12","query":"求单调区间有几种方法","intent":"method_list","gold_nodes":["M1-C3-S2A-K01","M1-C5-S4B-K03"],"note":"跨节方法"}
+{"qid":"G13","query":"解不等式的步骤是什么","intent":"method_list","gold_nodes":["M1-C2-S3-K01"],"note":"方法步骤"}
+{"qid":"G14","query":"化简三角函数式一般从哪下手","intent":"method_list","gold_nodes":["M1-C5-S5B-K01"],"note":"恒等变换方法"}
+{"qid":"G15","query":"增啊减啊的那个性质叫什么，怎么判断","intent":"stuck","gold_nodes":["M1-C3-S2A-K01"],"note":"不专业说法，考 aliases/R4"}
+{"qid":"G16","query":"就是那种图像一遍遍重复的函数，这节讲啥了","intent":"stuck","gold_nodes":["M1-C5-S4B-K01"],"note":"口语描述周期性"}
+{"qid":"G17","query":"三个字母乘在一起的那个公式，A和欧米伽那个","intent":"stuck","gold_nodes":["M1-C5-S6B-K02"],"note":"口语指代 y=Asin"}
+{"qid":"G18","query":"log 上面加个数是什么意思","intent":"stuck","gold_nodes":["M1-C4-S3A-K01"],"note":"记号不熟"}
+{"qid":"G19","query":"函数一点都听不懂","intent":"too_broad","gold_nodes":["M1-C3-S1A-K01"],"note":"范围过宽，回问给切入点"}
+{"qid":"G20","query":"三角函数那章完全懵了","intent":"too_broad","gold_nodes":["M1-C5-S2A-K01"],"note":"章级模糊"}
+{"qid":"G21","query":"集合这部分谁是重点","intent":"too_broad","gold_nodes":["M1-C1-S1-K01"],"note":"章级提问"}
+{"qid":"G22","query":"今天该复习什么","intent":"schedule","gold_nodes":[],"note":"不进检索，due 驱动"}
+{"qid":"G23","query":"考考我前两章的","intent":"schedule","gold_nodes":["M1-C1-S3-K01","M1-C2-S2-K01"],"note":"排程+范围"}
+{"qid":"G24","query":"诱导公式我忘了","intent":"concept_why","gold_nodes":["M1-C5-S3-K01"],"note":"复习唤起模式"}
+{"qid":"G25","query":"P76 那个思考题在问什么","intent":"stuck","gold_nodes":["M1-C3-S2A-K01"],"note":"结构定位+提问块"}
+{"qid":"G26","query":"教材第 130 页讲的是对数函数吗","intent":"stuck","gold_nodes":["M1-C4-S4A-K01"],"note":"页码定位"}
+{"qid":"G27","query":"练习第一题怎么做，就是判断元素全体那道","intent":"stuck","gold_nodes":["M1-C1-S1-K01"],"note":"题号+描述"}
+{"qid":"G28","query":"什么是充分条件","intent":"concept_why","gold_nodes":["M1-C1-S4A-K01"],"note":"直球定义问"}
+{"qid":"G29","query":"韦达定理这书讲了吗","intent":"stuck","gold_nodes":["M1-C2-S3-K01"],"note":"书外术语映射（负例警戒：教材不讲韦达定理，期望命中二次函数或不命中）"}
+{"qid":"G30","query":"弧度制和角度制怎么换算","intent":"method_list","gold_nodes":["M1-C5-S1B-K01"],"note":"高频方法"}
+{"qid":"G31","query":"同角的三角函数关系有哪几个","intent":"method_list","gold_nodes":["M1-C5-S2B-K01"],"note":"公式清单"}
+{"qid":"G32","query":"零点存在定理是什么","intent":"concept_why","gold_nodes":["M1-C4-S5A-K01"],"note":"定理问法"}
+{"qid":"G33","query":"指数爆炸和对数增长谁快","intent":"concept_why","gold_nodes":["M1-C4-S4C-K01"],"note":"不同函数增长差异"}
+{"qid":"G34","query":"那为什么这步要取倒数","intent":"follow_up","gold_nodes":["M1-C2-S2-K01"],"note":"承接上轮，绑 context"}
+{"qid":"G35","query":"y=Asin(wx+fai) 里 w 变图像怎么变","intent":"stuck","gold_nodes":["M1-C5-S6B-K01","M1-C5-S6B-K02"],"note":"口语 omega/fai"}
+{"qid":"G36","query":"正切函数图像为什么断成一条一条的","intent":"concept_why","gold_nodes":["M1-C5-S4C-K01"],"note":"图象追问"}
+{"qid":"G37","query":"x 的 x 次方求极值用指数化","intent":"stuck","gold_nodes":["M1-C4-S1B-K01"],"note":"超纲警戒：教材未涵盖，期望 fallback/本节未涵盖"}
+{"qid":"G38","query":"什么时候用基本不等式什么时候用二次函数求最值","intent":"method_list","gold_nodes":["M1-C2-S2-K01","M1-C2-S3-K01"],"note":"方法选择"}
+{"qid":"G39","query":"sin2x 化成二倍角之后怎么继续","intent":"stuck","gold_nodes":["M1-C5-S5A-K03"],"note":"二倍角"}
+{"qid":"G40","query":"子集和真子集差在哪","intent":"concept_why","gold_nodes":["M1-C1-S2-K01"],"note":"概念对比"}
+{"qid":"G41","query":"集合的运算那块，交并补怎么区分记号","intent":"stuck","gold_nodes":["M1-C1-S3-K01"],"note":"记号区分"}
+{"qid":"G42","query":"二分法算出来的近似值要精确到 0.1 怎么停","intent":"check_work","gold_nodes":["M1-C4-S5B-K01"],"note":"停止条件易错"}
