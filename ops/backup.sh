@@ -38,7 +38,7 @@ if [ "$FULL" = "1" ]; then
   tar -C "$WS" -cf - gzsx-md | ssh "$SERVER" "tar -C $DEST -xf -"
   ssh "$SERVER" "touch $DEST/gzsx-md/.full-$DATE"
   echo "④ gzsx-md 全量 ✓（du：）"
-  ssh "$SERVER" "du -sh $DEST/gzsx-md/gzsx-md"
+  ssh "$SERVER" "du -sh $DEST/gzsx-md"
 else
   echo "④ gzsx-md 跳过（加 --full 执行；已有全量则无需重跑）"
 fi
