@@ -121,5 +121,21 @@ class TestQuoteCut(unittest.TestCase):
         self.assertEqual(len(_cut_sentence("abc" * 50, 20)), 20)
 
 
+class TestSentenceComplete(unittest.TestCase):
+    """锚点半句 → 跨段续拼到句末（2026-11-04 P77 定义句实测）。"""
+
+    def test_complete_across_blank_line(self):
+        from book2qa.commands.recall import _complete_sentence
+        lines = ["一般地，设函数f(x)的定义域为D，区间 I⊆D",
+                 "",
+                 "如果任取 x1、x2，都有 f(x1)<f(x2)，那么就称单调递增（图3.2-3）."]
+        out = _complete_sentence(lines, 0)
+        self.assertIn("如果任取", out)
+        self.assertIn("单调递增", out)
+        # 已完整句不续拼
+        self.assertEqual(_complete_sentence(["这句话完了。", "下一段"], 0),
+                         "这句话完了。")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -232,11 +232,34 @@ def _line_text(lines, quote):
         else __import__("re").sub(r"\s+", "", quote)
     import re as _re
     nows = _re.sub(r"\s+", "", quote)
-    for ln in lines:
+    for i, ln in enumerate(lines):
         if _re.sub(r"\s+", "", ln) and _re.sub(r"\s+", "", ln) in nows or \
                 nows[:20] and nows[:20] in _re.sub(r"\s+", "", ln):
-            return ln.strip()[:200]
+            return _complete_sentence(lines, i)
     return quote[:160]
+
+
+def _complete_sentence(lines, i, max_extra=300):
+    """行 i 的文本若不以句末标点收尾，向下跨空行续拼到句子结束。
+
+    源 md 把一个数学句拆成多段（公式行独立成段），锚点按行存文 → 半句
+    （2026-11-04 用户实测：P77 定义句断在"区间 I⊆D"）。展示层拼回完整句，
+    不改图谱数据。"""
+    import re as _re
+    text = lines[i].strip()
+    if text.endswith(tuple(_SENT_END)):
+        return text[:200]
+    j, extra = i + 1, []
+    while j < len(lines) and len(text) + sum(len(x) for x in extra) < max_extra:
+        nxt = lines[j].strip()
+        if nxt:
+            extra.append(nxt if text.endswith((" ", "$")) else " " + nxt)
+            joined = text + "".join(extra)
+            if _re.search(r"[。！？；]\s*$|\)\s*\.?\s*$|\.\s*$", joined):
+                break
+        j += 1
+    out = (text + "".join(extra))[:200 + max_extra]
+    return out
 
 
 def _why(query, node, r1, r2, r3, meta_by, paragraphs):
