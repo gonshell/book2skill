@@ -6,7 +6,7 @@ WORKDIR /app
 COPY book2qa /app/book2qa
 
 RUN pip install --no-cache-dir setuptools wheel && \
-    pip install --no-cache-dir fastapi "uvicorn[standard]" onnxruntime tokenizers numpy && \
+    pip install --no-cache-dir fastapi "uvicorn[standard]" onnxruntime tokenizers numpy matplotlib && \
     pip install --no-cache-dir --no-deps /app/book2qa
 
 RUN useradd -m -u 1000 app && chown -R app:app /app

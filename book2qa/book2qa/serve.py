@@ -134,6 +134,38 @@ def create_app():
         finally:
             conn.close()
 
+    # ── 画图方案层②：确定性函数绘图（LLM 只出表达式，图由计算画）──
+    @app.post("/plot")
+    def plot(req: Request, body: dict):
+        _auth(req)
+        from book2qa import plotter
+        specs = body.get("exprs")
+        ok, err = plotter.validate_exprs(specs)
+        if not ok:
+            raise HTTPException(422, err)
+        name = plotter.expr_hash(specs) + ".png"
+        out = os.path.join(paths.data_dir(_ws()), "plots", name)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        if not os.path.isfile(out):          # 同请求幂等：命中缓存不重画
+            try:
+                plotter.render(specs, out)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc))
+        return {"ok": True, "url": "/plotimg/" + name,
+                "exprs": specs}
+
+    @app.get("/plotimg/{name}")
+    def plotimg(name: str, req: Request):
+        _auth(req)
+        from fastapi.responses import FileResponse
+        import re as _re
+        if not _re.fullmatch(r"[0-9a-f]{16}\.png", name):
+            raise HTTPException(404, "图不存在")
+        full = os.path.join(paths.data_dir(_ws()), "plots", name)
+        if not os.path.isfile(full):
+            raise HTTPException(404, "图不存在")
+        return FileResponse(full)
+
     # ── M2a：/section —— 整节取料（learn 带学、ask 兜底的节点序列来源）──
     @app.get("/img/{book}/{img_path:path}")
     def img(book: str, img_path: str, req: Request):
