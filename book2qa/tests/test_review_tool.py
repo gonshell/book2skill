@@ -104,5 +104,22 @@ class TestReview(unittest.TestCase):
         self.assertEqual(q["types"]["method"], 50.0)
 
 
+    def test_alias_import_without_action(self):
+        cands = [_c("A-K01", "周期性")]
+        new, diff, errors = self._roundtrip(cands, lambda ws: ws.append(
+            ["A-K01", "", "", "", "", "", "", "", "", "", "", "循环出现｜一遍遍重复"]))
+        self.assertEqual(errors, [])
+        self.assertEqual(new[0]["aliases"], ["循环出现", "一遍遍重复"])
+
+    def test_split_with_per_piece_type(self):
+        cands = [_c("A-K01", "集合的基本运算", type_="theorem")]
+        new, diff, _ = self._roundtrip(cands, lambda ws: ws.append(
+            ["A-K01", "", "", "", "", "", "", "拆分",
+             "并集与交集｜集合运算的判定方法@method", "", ""]))
+        self.assertEqual(new[0]["type"], "theorem")       # 首块沿用
+        self.assertEqual(new[1]["type"], "method")        # 次块按 @ 指定
+        self.assertEqual(new[1]["title"], "集合运算的判定方法")
+
+
 if __name__ == "__main__":
     unittest.main()

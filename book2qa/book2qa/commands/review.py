@@ -20,7 +20,7 @@ TYPES = ("concept", "theorem", "method", "skill", "application")
 SPLIT_SEP = "｜"
 
 _COLS = ["id", "标题", "类型", "页码", "题数", "unit", "机器建议",
-         "动作", "新标题", "新类型", "备注"]
+         "动作", "新标题", "新类型", "备注", "别名"]
 
 
 # ── 导出 ──────────────────────────────────────────────────
@@ -53,7 +53,7 @@ def export_xlsx(cands, out_path):
         row = [r["id"], r["title"], r["type"],
                "%s-%s" % tuple(pages) if pages[0] is not None else "",
                n_ex, r.get("unit", ""), "；".join(advice),
-               "", "", "", ""]          # 用户四列留空
+               "", "", "", "", "｜".join(r.get("aliases") or [])]
         ws.append(row)
         if advice:
             for cell in ws[ws.max_row]:
@@ -86,8 +86,12 @@ def import_xlsx(xlsx_path):
     for vals in rows:
         vals = list(vals) + [""] * (len(_COLS) - len(vals))
         cid, action, new_title, new_type = vals[0], vals[7], vals[8], vals[9]
+        aliases = [a.strip() for a in (vals[11] or "").split("｜") if a.strip()]
         if not cid:
             continue
+        # 别名随时可补（不需要动作列配合）
+        if aliases:
+            acts.append({"id": cid, "action": "补别名", "aliases": aliases})
         action = (action or "").strip()
         if not action:
             continue                      # 留空 = 保持，不记动作
@@ -161,6 +165,11 @@ def apply_actions(cands, acts):
             diff.append({"id": c["id"], "what": "并入",
                          "detail": "→ %s（题 %d 条随迁）"
                                    % (target["id"], len(c.get("exercises") or []))})
+        elif act == "补别名":
+            c["aliases"] = a["aliases"]
+            c["built_by"] = "auto+review"
+            diff.append({"id": c["id"], "what": "补别名",
+                         "detail": "＋" + "｜".join(a["aliases"])})
         elif act == "拆分":
             titles = [t.strip() for t in a["new_title"].split(SPLIT_SEP)
                       if t.strip()]
@@ -170,18 +179,28 @@ def apply_actions(cands, acts):
                 continue
             base = c["id"].rsplit("-K", 1)[0]
             old_title = c["title"]
-            c["title"], c["built_by"] = titles[0], "auto+review"
+            # 「名称@类型」后缀 = 该块指定类型（缺省沿用原类型）
+            pieces = []
+            for t in titles:
+                if "@" in t:
+                    name, ty = t.rsplit("@", 1)
+                    if ty.strip() in TYPES:
+                        pieces.append((name.strip(), ty.strip()))
+                        continue
+                pieces.append((t, c["type"]))
+            c["title"], c["type"] = pieces[0][0], pieces[0][1]
+            c["built_by"] = "auto+review"
             diff.append({"id": c["id"], "what": "拆分",
-                         "detail": "%r → 首块 %r" % (old_title, titles[0])})
-            for t in titles[1:]:
+                         "detail": "%r → 首块 %r" % (old_title, pieces[0][0])})
+            for name, ty in pieces[1:]:
                 nid = next_k(base)
                 import copy
                 nc = copy.deepcopy(c)
-                nc["id"], nc["title"] = nid, t
+                nc["id"], nc["title"], nc["type"] = nid, name, ty
                 nc["exercises"], nc["anchors"] = [], []
                 by_id[nid] = nc
                 diff.append({"id": nid, "what": "拆分新增",
-                             "detail": "%r（自 %s 拆出）" % (t, c["id"])})
+                             "detail": "%r@%s（自 %s 拆出）" % (name, ty, c["id"])})
 
     # 保序：原顺序的存活者 + 新拆分节点按 id 排在末尾
     seen, ordered = set(), []
