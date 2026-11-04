@@ -62,6 +62,20 @@ def build_parser():
                     help="工作区目录（覆盖四层解析）")
     sp.set_defaults(func=lambda a, t0: _import("index").execute(a, t0))
 
+    sp = sub.add_parser("review-export", help="裁定辅助：candidates → Excel（人批注）")
+    sp.add_argument("--book", required=True, help="册名")
+    sp.add_argument("--out", help="输出 xlsx 路径（默认 data/review-<册>.xlsx）")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS)
+    sp.set_defaults(func=lambda a, t0: _import("review").cmd_export(a, t0))
+
+    sp = sub.add_parser("review-import", help="裁定辅助：批注后的 Excel → 新 candidates + diff")
+    sp.add_argument("--book", required=True, help="册名")
+    sp.add_argument("--file", required=True, help="批注后的 xlsx 路径")
+    sp.add_argument("--apply", action="store_true",
+                    help="默认只预览 diff；加 --apply 才写回 candidates.jsonl")
+    sp.add_argument("--workspace", default=argparse.SUPPRESS)
+    sp.set_defaults(func=lambda a, t0: _import("review").cmd_import(a, t0))
+
     sp = sub.add_parser("serve", help="启动 HTTP 服务（M1a）")
     sp.add_argument("--workspace", default=argparse.SUPPRESS,
                     help="工作区目录（覆盖四层解析）")
