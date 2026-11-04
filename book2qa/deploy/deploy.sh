@@ -32,9 +32,14 @@ mkdir -p "$ROOT/dist"
 git -C "$ROOT" bundle create "$BUNDLE" --all
 scp -q "$BUNDLE" "$SERVER:$SHOME/book2skill.bundle"
 ssh "$SERVER" "mkdir -p $SHOME/data $SHOME/src/$BOOK $SHOME/backup"
-scp -q "$ROOT"/book2qa/data/*.jsonl "$SERVER:$SHOME/data/"
-scp -q "$ROOT"/book2qa/data/vectors.npz "$ROOT"/book2qa/data/vectors_meta.jsonl \
-    "$SERVER:$SHOME/data/" 2>/dev/null || echo "  (无向量索引，跳过——R4 将降级三路)"
+# 按册同步（M3-4 起产物在 data/<册>/ 下；有 graph.jsonl 的目录才算册）
+for d in "$ROOT"/book2qa/data/*/; do
+  [ -f "${d}graph.jsonl" ] || continue
+  b="$(basename "$d")"
+  ssh "$SERVER" "mkdir -p $SHOME/data/$b"
+  scp -q "$d"*.jsonl "$d"vectors.npz "$SERVER:$SHOME/data/$b/" 2>/dev/null \
+    || echo "  ($b 同步部分失败——检查)"
+done
 scp -q "$GZSX_FINAL/$BOOK/markdown.md" "$GZSX_FINAL/$BOOK/page_map.md" \
     "$SERVER:$SHOME/src/$BOOK/"
 
