@@ -29,6 +29,36 @@ _ALIAS_MAP = {
 }
 
 
+def _method_suffix(title):
+    """method 块后缀按章节内容定制（自审修正：数乘/数量积是运算不是判定）。"""
+    if any(k in title for k in ("数乘", "数量积", "坐标表示", "乘、除", "运算")):
+        return "运算法则与计算"
+    if any(k in title for k in ("平行", "垂直")):
+        return "判定与证明"
+    if "定理" in title:
+        return "应用与求解"
+    if "直观图" in title:
+        return "画法"
+    if "表面积" in title or "体积" in title:
+        return "公式与计算"
+    if "概型" in title or "概率" in title:
+        return "概率计算"
+    if "数据" in title or "估计" in title:
+        return "方法与估计"
+    if "三角表示" in title or "复数" in title:
+        return "运算方法"
+    return "判定方法"
+
+
+def _clean_title(title):
+    """清 OCR 噪音前缀（如 '$3 ^ { \\ast }$ 复数的三角表示'）。"""
+    import re
+    cleaned = re.sub(r"\$[^$]*\$\s*", "", title).strip()
+    if cleaned != title and cleaned and "选学" not in cleaned:
+        cleaned += "（选学）"
+    return cleaned or title
+
+
 def draft_row(row):
     """row: (id,标题,类型,页码,题数,...) → (动作,新标题,新类型,备注,别名) 或 None。"""
     cid, title, type_, pages, n_ex = row[0], row[1], row[2], row[3], row[4]
@@ -40,14 +70,17 @@ def draft_row(row):
     alias = _ALIAS_MAP.get(title, "")
 
     if span >= 5 and n_ex >= 8:
-        pieces = [title, "%s·判定方法@method" % title]
+        t0 = _clean_title(title)
+        pieces = [t0, "%s·%s@method" % (t0, _method_suffix(title))]
         note = "机器初稿：页跨度%d+题%d，拆定义/方法两块" % (span, n_ex)
         if span >= 8:
-            pieces.append("%s·典型例题@application" % title)
+            pieces.append("%s·典型例题@application" % t0)
             note += "；跨度大，另拆例题块"
         return ("拆分", "｜".join(pieces), "", note + "（可整行清空否决）", alias)
     if n_ex >= 14:
-        return ("拆分", "%s｜%s·方法@method" % (title, title), "",
+        t0 = _clean_title(title)
+        return ("拆分", "%s｜%s·%s@method" % (t0, t0, _method_suffix(title)),
+                "",
                 "机器初稿：题量%d偏大，补一个 method 位（可整行清空否决）" % n_ex,
                 alias)
     if alias:
