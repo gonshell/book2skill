@@ -39,6 +39,14 @@ for d in "$ROOT"/book2qa/data/*/; do
   ssh "$SERVER" "mkdir -p $SHOME/data/$b"
   scp -q "$d"*.jsonl "$d"vectors.npz "$SERVER:$SHOME/data/$b/" 2>/dev/null \
     || echo "  ($b 同步部分失败——检查)"
+  # book2md 原文（markdown/page_map/images）——段落路与 /img 依赖（幂等，有标记跳过）
+  if ! ssh "$SERVER" "test -f \"\$HOME/$SHOME/src/$b/.src-synced\"" 2>/dev/null; then
+    echo "== ⓪b 同步 $b 的 book2md 产物 =="
+    tar -C "$GZSX_FINAL/$b" -cf /tmp/b2k-src.tar markdown.md page_map.md images
+    scp -q /tmp/b2k-src.tar "$SERVER:$SHOME/"
+    ssh "$SERVER" "mkdir -p \"\$HOME/$SHOME/src/$b\" && tar -C \"\$HOME/$SHOME/src/$b\" -xf \"\$HOME/$SHOME/b2k-src.tar\" && touch \"\$HOME/$SHOME/src/$b/.src-synced\" && rm \"\$HOME/$SHOME/b2k-src.tar\""
+    rm -f /tmp/b2k-src.tar
+  fi
 done
 scp -q "$GZSX_FINAL/$BOOK/markdown.md" "$GZSX_FINAL/$BOOK/page_map.md" \
     "$SERVER:$SHOME/src/$BOOK/"
