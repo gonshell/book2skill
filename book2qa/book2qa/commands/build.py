@@ -11,7 +11,8 @@ import time
 
 from book2qa import paths
 from book2qa.envelope import emit
-from book2qa.exit_codes import (EXIT_OK, EXIT_MISSING, EXIT_USAGE)
+from book2qa.exit_codes import (EXIT_OK, EXIT_MISSING, EXIT_USAGE,
+                                EXIT_GATE_FAIL)
 
 _STAGES = ("structure", "extract", "candidates", "graph")
 

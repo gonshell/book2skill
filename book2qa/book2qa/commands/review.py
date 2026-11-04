@@ -197,7 +197,9 @@ def apply_actions(cands, acts):
                 import copy
                 nc = copy.deepcopy(c)
                 nc["id"], nc["title"], nc["type"] = nid, name, ty
-                nc["exercises"], nc["anchors"] = [], []
+                nc["exercises"] = []
+                # 锚点随拆分共享（同一节内容同源）——质量闸要求每节点可回查
+                nc["anchors"] = copy.deepcopy(c.get("anchors") or [])
                 by_id[nid] = nc
                 diff.append({"id": nid, "what": "拆分新增",
                              "detail": "%r@%s（自 %s 拆出）" % (name, ty, c["id"])})
