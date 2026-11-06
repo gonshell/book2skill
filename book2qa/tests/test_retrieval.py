@@ -60,6 +60,10 @@ class TestFusion(unittest.TestCase):
         self.assertIn("1.1", r3)
 
 
+from tests._corpus import skip_no_corpus
+
+
+@skip_no_corpus
 class TestRecallContract(unittest.TestCase):
     """G01 端到端：契约字段齐全（skill-io §1.1）。"""
 

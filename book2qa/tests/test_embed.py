@@ -31,6 +31,10 @@ class TestEmbed(unittest.TestCase):
                         owners[:3])
 
 
+from tests._corpus import skip_no_corpus
+
+
+@skip_no_corpus
 class TestR4Route(unittest.TestCase):
     def test_degradation_reported_in_warnings(self):
         """依赖不可用时 R4 降级必须进 warnings（宽 except 静默吞错的教训）。"""

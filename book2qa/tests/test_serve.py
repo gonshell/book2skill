@@ -7,6 +7,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from book2qa import serve
+from tests._corpus import skip_no_corpus
 
 
 class TestServe(unittest.TestCase):
@@ -23,6 +24,7 @@ class TestServe(unittest.TestCase):
         self.assertEqual(body["auth"], "off(dev)")
         self.assertGreater(body["nodes"], 0)
 
+    @skip_no_corpus
     def test_recall_contract(self):
         r = self.client.post("/recall", json={
             "book": "必修第一册", "query": "单调性为什么一定要说任意两个数"})
@@ -37,6 +39,7 @@ class TestServe(unittest.TestCase):
         r = self.client.post("/recall", json={"book": "必修第一册", "query": "  "})
         self.assertEqual(r.status_code, 422)
 
+    @skip_no_corpus
     def test_request_log_written(self):
         from book2qa import paths
         log = os.path.join(paths.data_dir(paths.resolve_workspace(None)),
@@ -44,6 +47,7 @@ class TestServe(unittest.TestCase):
         self.assertTrue(os.path.isfile(log))
         self.assertIn("单调性", open(log, encoding="utf-8").read())
 
+    @skip_no_corpus
     def test_auth_on_rejects_missing_key(self):
         os.environ["B2Q_API_KEY"] = "secret1"
         try:
